@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Icz0zvyX6czmecuLYOf/GQgdP/QhCGRjQNkYIkVcgQqlVh2+SkSqfZ5P+BFLiiL9MVCSGVOs+5loTTSCaMxMVA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Andrej\\.nuget\\packages\\monogame.content.builder.task\\3.8.1.303\\monogame.content.builder.task.3.8.1.303.nupkg.sha512",
+    "C:\\Users\\Andrej\\.nuget\\packages\\monogame.framework.desktopgl\\3.8.1.303\\monogame.framework.desktopgl.3.8.1.303.nupkg.sha512"
+  ],
+  "logs": []
+}
