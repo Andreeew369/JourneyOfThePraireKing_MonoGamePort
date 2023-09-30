@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SourceFileCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Profile>Reach</Profile>
+  <Platform>DesktopGL</Platform>
+  <Config />
+  <SourceFiles>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/GameObjects.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level0.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level1.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level10.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level11.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level12.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level2.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level3.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level4.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level5.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level6.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level7.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level8.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/Levels/level9.png</File>
+    <File>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/PixelFont.spritefont</File>
+  </SourceFiles>
+  <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+  </DestFiles>
+</SourceFileCollection>
