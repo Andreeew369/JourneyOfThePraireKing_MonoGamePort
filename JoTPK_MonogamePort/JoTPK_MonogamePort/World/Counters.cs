@@ -27,7 +27,7 @@ public class Counters {
         _scale = 28f / _font.MeasureString("Sample text").Y;
         
         //health counter
-        TextureManager.DrawObject(Drawable.Health,_pos.X, _pos.Y, sb);
+        TextureManager.DrawObject(GameElements.HealthPoint,_pos.X, _pos.Y, sb);
         float xOffset = _pos.X + Consts.ObjectSize + 6;
         float yOffset = _pos.Y;
         sb.DrawString(
@@ -39,7 +39,7 @@ public class Counters {
         
         //coin counter
         yOffset = _pos.Y + Consts.ObjectSize + 5;
-        TextureManager.DrawObject(Drawable.Coin1, _pos.X + 3, yOffset, sb);
+        TextureManager.DrawObject(GameElements.Coin1, _pos.X + 3, yOffset, sb);
         sb.DrawString(
             _font, $"x {player.Money}",
             new Vector2(xOffset, yOffset),

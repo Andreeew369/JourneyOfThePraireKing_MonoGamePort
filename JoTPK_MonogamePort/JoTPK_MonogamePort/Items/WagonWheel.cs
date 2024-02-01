@@ -13,10 +13,10 @@ public class WagonWheel : GameObject, IItem, IPowerUp {
     public bool IsInInventory { get; set; } = false;
     public float Timer { get; set; } = 0;
 
-    public WagonWheel(int x, int y, Player player) : base(x, y) { }
+    public WagonWheel(int x, int y) : base(x, y) { }
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.WagonWheel, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.WagonWheel, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {

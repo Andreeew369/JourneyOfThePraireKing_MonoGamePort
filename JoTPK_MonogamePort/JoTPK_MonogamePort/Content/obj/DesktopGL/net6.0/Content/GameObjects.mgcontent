@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SourceFile>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/GameObjects.png</SourceFile>
-  <SourceTime>2023-09-27T22:51:24.4617241+02:00</SourceTime>
-  <DestFile>C:/Users/Andrej/OneDrive - Žilinská univerzita v Žiline/Documents/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/bin/DesktopGL/Content/GameObjects.xnb</DestFile>
-  <DestTime>2023-09-27T22:51:42.4890378+02:00</DestTime>
+  <SourceFile>C:/Users/Andrej/Desktop/Coding/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/GameObjects.png</SourceFile>
+  <SourceTime>2023-10-29T11:33:31.3043467+01:00</SourceTime>
+  <DestFile>C:/Users/Andrej/Desktop/Coding/GitHub/C#/JourneyOfThePraireKing_MonoGamePort/JoTPK_MonogamePort/JoTPK_MonogamePort/Content/bin/DesktopGL/Content/GameObjects.xnb</DestFile>
+  <DestTime>2024-01-29T21:25:40.8016704+01:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2022-07-26T13:44:56+02:00</ImporterTime>
   <Processor>TextureProcessor</Processor>

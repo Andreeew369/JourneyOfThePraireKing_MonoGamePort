@@ -14,16 +14,12 @@ public class MachineGun : GameObject, IItem, IPowerUp {
     
     public float Timer { get; set; } = 0;
 
-    public MachineGun(float x, float y, Player player, int interval) : base(x, y) {
+    public MachineGun(float x, float y, int interval = 12_000) : base(x, y) {
         _interval = interval;
     }
 
-    public MachineGun(float x, float y, Player player) : base(x, y) {
-        _interval = 12_000;
-    }
-
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.MachineGun, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.MachineGun, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {
@@ -40,7 +36,7 @@ public class MachineGun : GameObject, IItem, IPowerUp {
     }
 
     public void Deactivate(Player player) {
-        player.FireRate = Player.DefaultFireRate;
+        player.FireRate = player.DefaultFireRate;
         IPowerUp.GlobalDeactivate(this, player);
     }
 }

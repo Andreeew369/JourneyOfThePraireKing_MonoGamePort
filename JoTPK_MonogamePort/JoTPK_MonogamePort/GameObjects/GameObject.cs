@@ -63,15 +63,10 @@ public class Wall : GameObject {
 
 public class EmptyObject : GameObject {
     public EmptyObject() : base(0, 0) {}
-    public override RectangleF HitBox => new(0,0,0,0);
+    public override RectangleF HitBox => new(0,0,1,1);
     public override void Draw(SpriteBatch sb) { }
     public override bool IsColliding(int otherX, int otherY, int otherSize) => false;
     public override bool IsColliding(float otherX, float otherY, float otherWidth, float otherHeight) => false;
-    public override bool Equals(object? obj) {
-        if (obj == null) return false;
-        return GetType() == obj.GetType();
-    }
-    public override int GetHashCode() => GetType().GetHashCode();
 }
 
 public enum WallType {

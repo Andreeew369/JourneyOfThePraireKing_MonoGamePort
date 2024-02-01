@@ -14,10 +14,10 @@ public class TombStone : GameObject, IItem, IPowerUp {
     public bool IsInInventory { get; set; } = false;
     public float Timer { get; set; } = 0;
 
-    public TombStone(float x, float y, Player player) : base(x, y) { }
+    public TombStone(float x, float y) : base(x, y) { }
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.TombStone, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.TombStone, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {
@@ -36,7 +36,7 @@ public class TombStone : GameObject, IItem, IPowerUp {
 
     public void Deactivate(Player player) {
         player.IsZombie = false;
-        player.Speed = Player.DefaultSpeed;
+        player.Speed = player.DefaultSpeed;
         Console.WriteLine("deactivate");
         IPowerUp.GlobalDeactivate(this, player);
     }

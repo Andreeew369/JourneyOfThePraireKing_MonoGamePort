@@ -16,15 +16,17 @@ public class SherrifBadge : GameObject, IItem, IPowerUp {
     public bool IsInInventory { get; set; } = false;
     
     public float Timer { get; set; } = 0;
-
-    public SherrifBadge(float x, float y, Player player) : base(x, y) {
-        _shotGun = new ShotGun(0, 0, player, Interval);
-        _machineGun = new MachineGun(0, 0, player, Interval);
-        _coffee = new Coffee(0, 0, player, Interval);
+    
+    public SherrifBadge(float x, float y) : base(x, y) {
+        _shotGun = new ShotGun(0, 0, Interval);
+        _machineGun = new MachineGun(0, 0, Interval);
+        _coffee = new Coffee(0, 0, Interval);
     }
 
+    public SherrifBadge(Vector2 pos) : this(pos.X, pos.Y) { }
+    
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.SheriffBadge, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.SheriffBadge, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {

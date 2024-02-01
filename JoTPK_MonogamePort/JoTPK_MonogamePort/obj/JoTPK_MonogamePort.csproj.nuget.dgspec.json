@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj": {}
+    "C:\\Users\\Andrej\\Desktop\\Coding\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj": {
+    "C:\\Users\\Andrej\\Desktop\\Coding\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj",
+        "projectUniqueName": "C:\\Users\\Andrej\\Desktop\\Coding\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj",
         "projectName": "JoTPK_MonogamePort",
-        "projectPath": "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj",
+        "projectPath": "C:\\Users\\Andrej\\Desktop\\Coding\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort.csproj",
         "packagesPath": "C:\\Users\\Andrej\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Andrej\\OneDrive - Žilinská univerzita v Žiline\\Documents\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\obj\\",
+        "outputPath": "C:\\Users\\Andrej\\Desktop\\Coding\\GitHub\\C#\\JourneyOfThePraireKing_MonoGamePort\\JoTPK_MonogamePort\\JoTPK_MonogamePort\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {

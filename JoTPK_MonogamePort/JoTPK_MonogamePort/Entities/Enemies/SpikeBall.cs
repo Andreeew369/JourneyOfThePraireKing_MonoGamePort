@@ -44,7 +44,7 @@ public class SpikeBall : Enemy {
                 }
             }
 
-            if (ActualSprite == Drawable.SpikeballBall4) return;
+            if (ActualSprite == GameElements.SpikeballBall4) return;
             Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
             if (Timer >= AnimationInterval) {
                 Timer = 0;

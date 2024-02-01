@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Drawing;
-using System.Net.NetworkInformation;
 using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.Utils;
@@ -27,17 +26,15 @@ public abstract class Enemy : GameObject {
     public int XIndex { get; private set; }
     public int YIndex { get; private set; }
     public Level LevelProperty { get; }
+    protected float Timer { get; set; }
     
     protected int SpriteNumber { get; set; }
-    private readonly Drawable[] _sprites;
-    protected ImmutableArray<Drawable> Sprites => _sprites.ToImmutableArray();
-    protected Drawable ActualSprite { get; set; }
+    private readonly GameElements[] _sprites;
+    protected ImmutableArray<GameElements> Sprites => _sprites.ToImmutableArray();
+    protected GameElements ActualSprite { get; set; }
     protected ImmutableList<GameObject> Surroundings => _surroundings.ToImmutableList();
     protected void SetSurroundings(List<GameObject> surroundings) => _surroundings = surroundings;
     private List<GameObject> _surroundings;
-    
-
-    public float Timer { get; set; }
 
     protected Enemy(EnemyType type, int x, int y, Level level) : base(x, y) {
         (XIndex, YIndex) = Level.GetIndexes(x, y);
@@ -59,7 +56,7 @@ public abstract class Enemy : GameObject {
 
     public void Damage(int amount) {
         Health -= amount;
-        //Console.WriteLine(Health);
+        //Console.WriteLine(HealthPoint);
         if (Health <= 0) {
             State = EnemyState.KilledByPlayer;
         }
@@ -78,7 +75,7 @@ public abstract class Enemy : GameObject {
         didChange = true;
     }
 
-    public void DropItem(Level level, Player player, EnemiesManager enemiesManager) {
+    public void DropItem(Level level, Player player, EnemiesManager? enemiesManager) {
         Random rand = new();
 
         if (rand.NextDouble() < 0.1) {
@@ -97,14 +94,14 @@ public abstract class Enemy : GameObject {
             } else {
                 //power up
                 item = rand.Next(Consts.PowerUpCount) switch {
-                    0 => new Coffee(x, y, player),
-                    1 => new ShotGun(x, y, player),
-                    2 => new MachineGun(x, y, player),
-                    3 => new SherrifBadge(x, y, player),
-                    4 => new WagonWheel(x, y, player),
-                    5 => new Nuke(x, y, player, enemiesManager),
-                    6 => new TombStone(x, y, player),
-                    7 => new SmokeBomb(x, y, player, enemiesManager, level),
+                    0 => new Coffee(x, y),
+                    1 => new ShotGun(x, y),
+                    2 => new MachineGun(x, y),
+                    3 => new SherrifBadge(x, y),
+                    4 => new WagonWheel(x, y),
+                    5 => new Nuke(x, y, enemiesManager),
+                    6 => new TombStone(x, y),
+                    7 => new SmokeBomb(x, y, enemiesManager, level),
                     _ => throw new NotImplementedException()
                 };
             }
@@ -116,23 +113,15 @@ public abstract class Enemy : GameObject {
 
     public virtual void Update(Player player, List<Enemy> enemies,  GameTime gt) {
         Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
-        bool update = false;
         // Console.WriteLine(_timer);
         if (Timer >= AnimationInterval) {
             Timer = 0;
-            SpriteNumber++;
-            update = true;
-        }
-        if (SpriteNumber >= 2) {
-            SpriteNumber = 0;
+            SpriteNumber = (SpriteNumber + 1) % 2;
         }
         // Console.WriteLine(SpriteNumber);
 
         ActualSprite = _sprites[SpriteNumber];
         Move(player, enemies);
-
-        // if (update) {
-        // }
     }
 
     public virtual bool CanSeePlayer(Player player) {
@@ -250,31 +239,31 @@ public enum EnemyType {
 }
 
 public static class EnemyTypeMethods {
-    public static (int health, float speed, Drawable[] sprites) GetEnemyAtributes(this EnemyType type) {
+    public static (int health, float speed, GameElements[] sprites) GetEnemyAtributes(this EnemyType type) {
         return type switch {
             EnemyType.Orc => (1, 1.75f, new[] {
-                Drawable.Orc1 , Drawable.Orc2, Drawable.OrcHit
+                GameElements.Orc1 , GameElements.Orc2, GameElements.OrcHit
             }),
             EnemyType.SpikeBall => (2, 4.25f, new[] {
-                Drawable.Spikeball1, Drawable.Spikeball2,
-                Drawable.SpikeballHit, Drawable.SpikeballBall1,
-                Drawable.SpikeballBall2, Drawable.SpikeballBall3,
-                Drawable.SpikeballBall4 , Drawable.SpikeballBallHit
+                GameElements.Spikeball1, GameElements.Spikeball2,
+                GameElements.SpikeballHit, GameElements.SpikeballBall1,
+                GameElements.SpikeballBall2, GameElements.SpikeballBall3,
+                GameElements.SpikeballBall4 , GameElements.SpikeballBallHit
             }),
             EnemyType.Butterfly => (1, 1.75f, new[] {
-                Drawable.Butterfly1, Drawable.Butterfly2, Drawable.ButterflyHit
+                GameElements.Butterfly1, GameElements.Butterfly2, GameElements.ButterflyHit
             }),
             EnemyType.Mushroom => (2, 4.25f, new[] {
-                Drawable.Mushroom1, Drawable.Mushroom2, Drawable.MummyHit
+                GameElements.Mushroom1, GameElements.Mushroom2, GameElements.MummyHit
             }),
             EnemyType.Ogre => (3, 0.75f, new[] {
-                Drawable.Ogre1 , Drawable.Ogre2, Drawable.OgreHit
+                GameElements.Ogre1 , GameElements.Ogre2, GameElements.OgreHit
             }),
             EnemyType.Imp => (3, 3f, new[] {
-                Drawable.Imp1 , Drawable.Imp2, Drawable.ImpHit
+                GameElements.Imp1 , GameElements.Imp2, GameElements.ImpHit
             }),
             EnemyType.Mummy => (6, 1.5f, new [] {
-                Drawable.Mummy1 , Drawable.Mummy2, Drawable.MummyHit
+                GameElements.Mummy1 , GameElements.Mummy2, GameElements.MummyHit
             }),
             EnemyType.CowBoy => throw new NotImplementedException(),
             EnemyType.Fector => throw new NotImplementedException(),

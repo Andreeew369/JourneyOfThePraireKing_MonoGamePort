@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.NetworkInformation;
 using JoTPK_MonogamePort.Entities;
 using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Utils;
@@ -9,19 +8,21 @@ using Microsoft.Xna.Framework;
 namespace JoTPK_MonogamePort.Items;
 
 public interface IPowerUp {
-    public static Drawable PowerUpToDrawable(IPowerUp powerUp) {
+    public static GameElements? PowerUpToDrawable(IPowerUp powerUp) {
         return powerUp switch {
-            Coffee _ => Drawable.Coffee,
-            MachineGun => Drawable.MachineGun,
-            ShotGun => Drawable.Shotgun,
-            SherrifBadge => Drawable.SheriffBadge,
-            TombStone => Drawable.TombStone,
-            SmokeBomb => Drawable.SmokeBomb,
-            Nuke => Drawable.Nuke,
-            WagonWheel => Drawable.WagonWheel,
+            Coffee _ => GameElements.Coffee,
+            MachineGun => GameElements.MachineGun,
+            ShotGun => GameElements.Shotgun,
+            SherrifBadge => GameElements.SheriffBadge,
+            TombStone => GameElements.TombStone,
+            SmokeBomb => GameElements.SmokeBomb,
+            Nuke => GameElements.Nuke,
+            WagonWheel => GameElements.WagonWheel,
+            EmptyPowerUp => null,
             _ => throw new NotImplementedException()
         };
     }
+    
     public static void GlobalUpdate(IPowerUp powerUp, int interval, GameTime gt, Level level, Player player) {
         
         if (powerUp is not (IItem or GameObject)) return;
@@ -33,7 +34,7 @@ public interface IPowerUp {
             level.RemoveObject((GameObject)item, Level.GetIndexes((GameObject)item));
         }
         else {
-            Console.WriteLine("deactivate");
+            // Console.WriteLine("deactivate");
             if (item.Timer < interval) return;
             powerUp.Deactivate(player);
         }
@@ -52,11 +53,12 @@ public interface IPowerUp {
     }
 
     public static void GlobalDeactivate(IPowerUp powerUp, Player player) {
-        lock (Player.Lock) player.RemoveActivePowerUp(powerUp);
+        player.RemoveActivePowerUp(powerUp);
     }
 
     public static void GlobalPickUp(IPowerUp powerUp, Player player, Level level) {
-        if (powerUp is not (IItem and GameObject)) throw new ArgumentException(@"Invalid power up. Power up has to be instance of GameObject and IItem");
+        if (powerUp is not (IItem and GameObject))
+            throw new ArgumentException(@"Invalid power up. Power up has to be instance of GameObject and IItem");
 
         level.RemoveObject((GameObject)powerUp, Level.GetIndexes((GameObject)powerUp));
         powerUp.IsInInventory = true;

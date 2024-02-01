@@ -13,12 +13,8 @@ public class ShotGun : GameObject, IPowerUp, IItem {
     public bool IsInInventory { get; set; } = false;
     public float Timer { get; set; } = 0;
 
-    public ShotGun(float x, float y, Player player, int interval) : base(x, y) {
+    public ShotGun(float x, float y, int interval = 12_000) : base(x, y) {
         _interval = interval;
-    }
-
-    public ShotGun(float x, float y, Player player) : base(x, y) {
-        _interval = 12_000;
     }
 
     public void Activate(Player player, bool isInInventory) {
@@ -33,7 +29,7 @@ public class ShotGun : GameObject, IPowerUp, IItem {
 
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.Shotgun, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.Shotgun, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {

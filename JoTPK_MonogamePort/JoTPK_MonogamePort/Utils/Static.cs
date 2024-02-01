@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using JoTPK_MonogamePort.Entities;
 using JoTPK_MonogamePort.GameObjects;
+using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.World;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Timer = System.Timers.Timer;
 
-namespace JoTPK_MonogamePort.Utils; 
+namespace JoTPK_MonogamePort.Utils;
+
+public delegate void UpgradeFunction(Player player, Level level);
 
 public static class Consts {
-
+    
     public const double Tolerance = 0.001;
 
     public static readonly ImmutableDictionary<Keys, (int x, int y)> MovementDirections =
@@ -56,6 +61,7 @@ public static class Consts {
 
     public static readonly ImmutableDictionary<(float x, float y), float> DirectionToAnglesMap = Functions.GetDirToRadMap().ToImmutableDictionary();
 }
+
 
 public static class Functions {
     public static int Signum(float value) {
@@ -135,5 +141,66 @@ public static class Functions {
         }
 
         return longest;
+    }
+
+    public static Texture2D CreateGradientTexture(GraphicsDevice gd, Color color1, Color color2, int width, int height) {
+        Texture2D gradient = new(gd, width, height);
+
+        Color[] data = new Color[width * height];
+        float step = 1f / width;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Color color = Color.Lerp(color1, color2, x * step);
+                data[y * width + x] = color;
+            }
+        }
+        gradient.SetData(data);
+        return gradient;
+    }
+
+    public static UpgradeFunction GetFunc(this Upgrades powerUp) {
+        return powerUp switch {
+            Upgrades.Boots1 or Upgrades.Boots2 => (player, _) => {
+                player.DefaultSpeed += 1;
+            },
+            Upgrades.Gun1 or Upgrades.Gun2 or Upgrades.Gun3 => (player, _) => {
+                player.DefaultFireRate -= player.DefaultFireRate * 0.2f;
+            },
+            Upgrades.Ammo1 or Upgrades.Ammo2 or Upgrades.Ammo3 => (player, _) => {
+                player.BulletDamage += 1;
+            },
+            Upgrades.SuperGun => (player, _) => {
+                player.ShootingType = ShootingType.ShotGun;
+                player.CanRemoveShootGun = false;
+            },
+            Upgrades.SheriffBadge => (player, level) => {
+                new SherrifBadge(0, 0).PickUp(player, level);
+            },
+            Upgrades.HealthPoint => (player, level) => {
+                new HealthPoint(0, 0).PickUp(player, level);
+            },
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    public static int GetPrice(this Upgrades powerUp) {
+        return powerUp switch {
+            Upgrades.Boots1 => 8,
+            Upgrades.Boots2 or Upgrades.Gun2 => 20,
+            Upgrades.HealthPoint or Upgrades.SheriffBadge or Upgrades.Gun1 => 10,
+            Upgrades.Gun3 or Upgrades.Ammo2 => 30,
+            Upgrades.SuperGun => 99,
+            Upgrades.Ammo1 => 15,
+            Upgrades.Ammo3 => 45,
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    public static GameElements ToGameElement(this Upgrades powerUp) {
+        if (Enum.TryParse(powerUp.ToString(), out GameElements gameElement))
+            return gameElement;
+        
+        throw new NotImplementedException();
     }
 }

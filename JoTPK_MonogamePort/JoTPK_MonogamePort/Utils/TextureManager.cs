@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Utils; 
 
-public class TextureManager {
+public static class TextureManager {
         
     private static readonly int Size = Consts.ObjectSize;
-    private static Dictionary<string, Texture2D>? _textures;
+    //fix arrow
+    private static readonly Rectangle[] GuiElementsCoords = {
+        new(0, 0, 256, 12), //Timer frame
+        new(0, 12 + 1, 248, 4), //Gradient
+        new(0, 16 + 1, 91, 40), //Controls hint
+        new(91, 16 + 1, 28, 30), //E Key Hint
+        new(91 + 28, 16 + 1, 24, 24), //PowerUp Frame
+        new(91 + 28 + 24, 16 + 1, 6, 8), //Arrow
+        new(91 + 28 + 24 + 6, 16 + 1, 9, 11),//Timer Icon
+    };
 
     private static readonly Rectangle[] ObjectCoords = {
         new(0, 0, Size, Size), //player
@@ -75,12 +85,55 @@ public class TextureManager {
         new(14 * Size, 6 * Size, Size, Size), //shotgun
         new(15 * Size, 6 * Size, Size, Size), //coffee
         
-        new(0, 512 - 8 * 2, 6 * 2, 8 * 2)
+        new(13 * Size, 3 * Size, Size, Size), //Speed1
+        new(13 * Size, 4 * Size, Size, Size), //Speed2
+        new(11 * Size, 3 * Size, Size, Size), //BulletDmg1
+        new(11 * Size, 4 * Size, Size, Size), //BulletDmg2
+        new(11 * Size, 5 * Size, Size, Size), //BulletDmg3 
+        new(12 * Size, 3 * Size, Size, Size), //ShootingBoost1 
+        new(12 * Size, 4 * Size, Size, Size), //ShootingBoost2
+        new(12 * Size, 5 * Size, Size, Size), //ShootingBoost3
+        new(13 * Size, 5 * Size, Size, Size), //SuperGun
+        
+        new(0, 4 * Size, Size, Size), //CowboyIdle1
+        new(Size, 4 * Size, Size, Size), //CowboyIdle2
+        new(2 * Size, 4 * Size, Size, Size), //CowBoyShooting1
+        new(3 * Size, 4 * Size, Size, Size), //CowboyShooting2
+        new(4 * Size, 4 * Size, Size, Size), //CowboyHit
+        
+        new(5 * Size, 4 * Size, Size, Size), //Fector1
+        new(6 * Size, 4 * Size, Size, Size), //Fector2
+        new(7 * Size, 4 * Size, Size, Size), //Fector3
+        new(8 * Size, 4 * Size, Size, Size), //FectorHit
+        
+        new(0, 3 * Size, Size, Size), //Gopher1
+        new(Size, 3 * Size, Size, Size), //Gopher2
+        new(2 * Size, 3 * Size, Size, Size), //Gopher3
+        
+        new(3 * Size, 3 * Size, Size, Size), //Trader1
+        new(4 * Size, 3 * Size, Size, Size), //Trader2
+        new(5 * Size, 3 * Size, Size, Size), //TraderIdle
+        new(6 * Size, 3 * Size, Size, Size), //TraderIdleLeft
+        new(7 * Size, 3 * Size, Size, Size), //TraderIdleRight
+        new(0, 6 * Size, 4 * Size, 2 * Size), //TraderFrame
+        
+        new(10 * Size, 3 * Size, Size, Size), //Hearth
+        new(10 * Size, 4 * Size, Size, Size), //Skull
+        new(10 * Size, 5 * Size, Size, Size), //Log
+        new(15 * Size, Size, Size, Size), //bridge
+        
+        new(12 * Size + 5, 2 * Size, 5, 5),
+        new(12 * Size + 5, 2 * Size + 6, 5, 5),
     };
 
+    public static ImmutableArray<Rectangle> ObjectCoordsP => ObjectCoords.ToImmutableArray();
+    public static ImmutableArray<Rectangle> GuiElementsCoordsP => GuiElementsCoords.ToImmutableArray();
+
+    private static Dictionary<string, Texture2D>? _textures;
+    private static Dictionary<string, Texture2D>? _mapTextures;
+
     public static void Inicialize(ContentManager cm) {
-        _textures = new Dictionary<string, Texture2D> {
-            {"GameObjects", cm.Load<Texture2D>("GameObjects")},
+        _mapTextures = new Dictionary<string, Texture2D> {
             {"Map0", cm.Load<Texture2D>("Levels\\level0")},
             {"Map1", cm.Load<Texture2D>("Levels\\level1")},
             {"Map2", cm.Load<Texture2D>("Levels\\level2")},
@@ -95,13 +148,19 @@ public class TextureManager {
             {"Map11", cm.Load<Texture2D>("Levels\\level11")},
             //{"Map12", cm.Load<Texture2D>("Levels\\level12")},
         };
+        _textures = new Dictionary<string, Texture2D> {
+            {"GameObjects", cm.Load<Texture2D>("GameObjects")},
+            {"GuiElements", cm.Load<Texture2D>("Gui")},
+        };
     }
 
+    public static int MapCount => _mapTextures?.Count ?? 0;
+
     public static Texture2D GetTexture(string texture) {
-        if (_textures == null) 
+        if (_mapTextures == null) 
             throw new NullReferenceException("Texture Manager wasnt inicialized.");
         
-        if (_textures.TryGetValue(texture, out Texture2D? geTexture))
+        if (_mapTextures.TryGetValue(texture, out Texture2D? geTexture))
             return geTexture;
 
         throw new ArgumentException($"Texture manager doesnt contain {texture}");
@@ -109,47 +168,40 @@ public class TextureManager {
 
 
     public static void DrawMap(string map, SpriteBatch sb) {
-        if (_textures == null)
+        if (_mapTextures == null)
             throw new NullReferenceException("Texture Manager wasnt inicialized.");
 
-        if (_textures.TryGetValue(map, out Texture2D? texture)) {
+        if (_mapTextures.TryGetValue(map, out Texture2D? texture)) {
             sb.Draw(texture, new Vector2(Consts.LevelXOffset, Consts.LevelYOffset), Color.White);
         }
     }
 
-    public static void DrawObject(Drawable d, float x, float y, SpriteBatch sb) {
+    public static void DrawObject(GameElements o, float x, float y, SpriteBatch sb) {
         if (_textures == null) 
             throw new NullReferenceException("Texture Manager wasnt inicialized.");
 
-        if ((int)d >= ObjectCoords.Length)
+        if ((int)o >= ObjectCoords.Length)
             throw new NotImplementedException();
 
         if (_textures.TryGetValue("GameObjects", out Texture2D? texture)) {
-            Rectangle coords = ObjectCoords[(int)d];
+            Rectangle coords = ObjectCoords[(int)o];
             sb.Draw(texture, new Rectangle((int)x, (int)y, coords.Width, coords.Height), coords, Color.White);
         }
     }
+    
+    public static void DrawGuiElement(GuiElement g, float x, float y, SpriteBatch sb) {
+        DrawGuiElement(g, x, y, sb, GuiElementsCoords[(int)g]);
+    }
 
-    // public static void DrawObject(Drawable d, Rectangle scale, SpriteBatch sb) {
-    //     if (_textures == null) 
-    //         throw new NullReferenceException("Texture Manager wasnt initialized.");
-    //
-    //     if ((int)d >= ObjectCoords.Length)
-    //         throw new NotImplementedException();
-    //
-    //     if (_textures.TryGetValue("GameObjects", out Texture2D? texture)) {
-    //         Rectangle coords = ObjectCoords[(int)d];
-    //         sb.Draw(texture, scale, coords, Color.White);
-    //     }
-    // }
-
-    public static void Dispose() {
-        if (_textures == null)
+    public static void DrawGuiElement(GuiElement g, float x, float y, SpriteBatch sb, Rectangle partOfTexture) {
+        if (_textures == null) 
             throw new NullReferenceException("Texture Manager wasnt inicialized.");
 
-        foreach (Texture2D texture in _textures.Values) {
-            if (texture.IsDisposed) continue;
-            texture.Dispose();
+        if ((int)g >= ObjectCoords.Length)
+            throw new NotImplementedException();
+
+        if (_textures.TryGetValue("GuiElements", out Texture2D? texture)) {
+            sb.Draw(texture, new Vector2(x, y), partOfTexture, Color.White, 0f, Vector2.Zero, 2f ,SpriteEffects.None, 0f);
         }
     }
 }

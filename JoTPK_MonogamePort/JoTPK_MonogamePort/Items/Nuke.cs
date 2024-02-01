@@ -10,17 +10,17 @@ namespace JoTPK_MonogamePort.Items;
 public class Nuke : GameObject, IPowerUp, IItem {
 
     private const int Interval = 4000;
-    private readonly EnemiesManager _enemiesManager;
+    private readonly EnemiesManager? _enemiesManager;
     public bool IsInInventory { get; set; } = false;
     
     public float Timer { get; set; } = 0;
 
-    public Nuke(float x, float y, Player player ,EnemiesManager enemiesManager) : base(x, y) {
+    public Nuke(float x, float y, EnemiesManager? enemiesManager) : base(x, y) {
         _enemiesManager = enemiesManager;
     }
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.Nuke, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.Nuke, RoundedX, RoundedY, sb);
     }
 
     public void Activate(Player player, bool isInInventory) {

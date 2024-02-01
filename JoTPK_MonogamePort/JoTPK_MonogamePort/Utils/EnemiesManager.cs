@@ -22,7 +22,11 @@ public class EnemiesManager {
     private readonly List<Enemy> _enemies;
     private float _timer = 0f;
 
-    private readonly object _lock = new();
+    public float Timer {
+        get => _timer;
+        set => _timer = value;
+    }
+
     public bool CanSpawn { get; set; }
     public bool CanMove { get; set; }
 
@@ -44,11 +48,11 @@ public class EnemiesManager {
     }
 
     public void Update(Player player, Level level, GameTime gt) {
-         CreateEnemies(level, gt);
+        if (_enemies.Count == 0 && !CanSpawn) {
+            level.CanSwitchLevel = true;
+        } 
         
-        // if (this._animationTick >= AnimationInterval * 2) {
-        //     this._animationTick = 0;
-        // }
+        CreateEnemies(level, gt);
 
         List<Enemy> enemiesCopy = new(_enemies.Count);
         enemiesCopy.AddRange(_enemies);
@@ -72,7 +76,8 @@ public class EnemiesManager {
     }
 
     private void CreateEnemies(Level level, GameTime gt) {
-        if (!CanSpawn) return;
+        if (!CanSpawn)
+            return;
 
         _timer += gt.ElapsedGameTime.Milliseconds / 1000f;
         if (_timer >= SpawnInterval) {
@@ -102,7 +107,6 @@ public class EnemiesManager {
                 _enemies.Add(GetRandomEnemy(_enemyTypeList, x, y, level));
             }
         }
-
     }
 
     public void DamageEnemiesAt(Bullet bullet) {

@@ -22,17 +22,17 @@ public class BulletManager {
 
     public int BulletCount => _bullets.Count;
 
-    private readonly List<Bullet> _bullets;
     private static readonly int BulletPoolSize = 200;
+    private readonly List<Bullet> _bullets;
     private readonly Queue<Bullet> _bulletPool;
-    private readonly int _compoziteImageSize;
+    private GameElements _bulletType;
 
-    public BulletManager(Level level) {
+    public BulletManager(Level level, GameElements type) {
+        _bulletType = type;
         _bullets = new List<Bullet>();
         _bulletPool = new Queue<Bullet>();
-        _compoziteImageSize = Level.Width * Consts.ObjectSize;
         for (int i = 0; i < BulletPoolSize; i++) {
-            _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level));
+            _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level, type));
         }
     }
 
@@ -44,18 +44,18 @@ public class BulletManager {
         }
     }
 
-    public void Update(Level level, EnemiesManager enemiesManager) {
+    public void Update(Level level, EnemiesManager? enemiesManager, ISender sender) {
         List<Bullet> copy = new(_bullets);
         foreach (Bullet b in copy) {
             b.Move(level, out float dx, out float dy);
-            if (b.CollisionDetection(b.HitBox.X, b.HitBox.Y, dx, dy, enemiesManager) || b.Collided) {
+            if (b.CollisionDetection(b.HitBox.X, b.HitBox.Y, dx, dy, enemiesManager, sender) || b.Collided) {
                 _bullets.Remove(b);
                 RecycleBullet(b);
             }
         }
     }
 
-    public void AddBullets(object sender, Level level) {
+    public void AddBullets(ISender sender, Level level) {
 
         float dx = 0;
         float dy = 0;
@@ -63,7 +63,7 @@ public class BulletManager {
         if (sender is Player player) {
 
             long nowTime = DateTime.Now.Ticks;
-            float fireRate = player.ShootingType is ShootingType.Normal ? player.FireRate : Player.DefaultFireRate;
+            float fireRate = player.ShootingType is ShootingType.Normal ? player.FireRate : player.DefaultFireRate;
             long ticks = (long)(fireRate * 10_000_000);
             
             if (_lastTime + ticks >= nowTime) return;
@@ -110,8 +110,8 @@ public class BulletManager {
             //    Console.WriteLine(this._bullets.Count);
             //}
         }
-        else if (sender is IBoss) {
-
+        else if (sender is CowBoy cowBoy) {
+            
         }
     }
 
@@ -123,7 +123,7 @@ public class BulletManager {
             return bullet;
         }
         
-        return new Bullet(x, y, dx, dy, damage, level);
+        return new Bullet(x, y, dx, dy, damage, level, _bulletType);
     }
 
     private void RecycleBullet(Bullet bullet) {
@@ -147,5 +147,13 @@ public class BulletManager {
         //     _bullets.Remove(bullet);
         // }
         _bullets.Clear();
+    }
+
+    public void ChangeBullerType(GameElements type, Level level) {
+        _bulletPool.Clear();
+        for (int i = 0; i < BulletPoolSize; i++) {
+            _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level, type));
+        }
+        _bulletType = type;
     }
 }

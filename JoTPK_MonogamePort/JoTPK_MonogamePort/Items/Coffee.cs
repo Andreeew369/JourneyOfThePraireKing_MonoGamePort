@@ -15,18 +15,14 @@ public class Coffee : GameObject, IItem, IPowerUp {
 
     private int _interval;
 
-    public Coffee(int x, int y, Player player, int interval) : base(x, y) {
+    public Coffee(int x, int y, int interval = 8000) : base(x, y) {
         _interval = interval;
-    }
-
-    public Coffee(int x, int y, Player player) : base(x, y) {
-        _interval = 8000;
     }
 
     public override RectangleF HitBox => IItem.GlobalHitBox(X, Y);
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.Coffee, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.Coffee, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {
@@ -39,12 +35,12 @@ public class Coffee : GameObject, IItem, IPowerUp {
 
 
     public void Activate(Player player, bool isInInventory) {
-        player.Speed = Player.DefaultSpeed + 1;
+        player.Speed = player.DefaultSpeed + 1;
         IPowerUp.GlobalActivate(this, player, isInInventory);
     }
 
     public void Deactivate(Player player) {
-        lock (Player.Lock) player.Speed = Player.DefaultSpeed;
+        player.Speed = player.DefaultSpeed;
         IPowerUp.GlobalDeactivate(this, player);
     }
 }

@@ -11,20 +11,20 @@ namespace JoTPK_MonogamePort.Items;
 public class SmokeBomb : GameObject, IItem, IPowerUp {
 
     private const int Interval = 4_000;
-    private readonly EnemiesManager _enemiesManager;
+    private readonly EnemiesManager? _enemiesManager;
     private readonly Random _random;
     private readonly Level _level;
     public bool IsInInventory { get; set; } = false;
     public float Timer { get; set; } = 0;
 
-    public SmokeBomb(float x, float y, Player player, EnemiesManager enemiesManager, Level level) : base(x, y) {
+    public SmokeBomb(float x, float y, EnemiesManager? enemiesManager, Level level) : base(x, y) {
         _enemiesManager = enemiesManager;
         _random = new Random();
         _level = level;
     }
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.SmokeBomb, RoundedX, RoundedY, sb);
+        TextureManager.DrawObject(GameElements.SmokeBomb, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {

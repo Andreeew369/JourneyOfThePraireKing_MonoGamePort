@@ -15,6 +15,7 @@ public class Bullet : GameObject {
     public int XIndex { get; private set; }
     public int YIndex { get; private set; }
     public int Damage { get; private set; }
+    private readonly GameElements _type;
 
     private const int HitBoxSize = 8;
     public override RectangleF HitBox => new(
@@ -24,7 +25,7 @@ public class Bullet : GameObject {
     );
 
     public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(Drawable.Bullet1, (int)HitBox.X, (int)HitBox.Y, sb);
+        TextureManager.DrawObject(_type, (int)HitBox.X, (int)HitBox.Y, sb);
     }
 
     public bool Collided { get; set; }
@@ -32,7 +33,9 @@ public class Bullet : GameObject {
     private (float x, float y) _velocity;
     private List<GameObject> _surroundings;
 
-    public Bullet(float x, float y, float xVelocity, float yVelocity, int damage, Level level) : base(x, y) {
+    public Bullet(float x, float y, float xVelocity, float yVelocity, int damage, Level level, GameElements type) 
+        : base(x, y) {
+        _type = type;
         _velocity = (xVelocity, yVelocity);
         Collided = false;
         (XIndex, YIndex) = Level.GetIndexes(XMiddle, YMiddle);
@@ -63,7 +66,7 @@ public class Bullet : GameObject {
         //Console.WriteLine(_surroundings.Count);
     }
 
-    public bool CollisionDetection(float x, float y, float dx, float dy, EnemiesManager enemiesManager) {
+    public bool CollisionDetection(float x, float y, float dx, float dy, EnemiesManager? enemiesManager, ISender sender) {
 
         foreach (GameObject o in _surroundings) {
             if (!o.IsColliding(x, y, HitBox.Width, HitBox.Height)) continue;
@@ -71,8 +74,11 @@ public class Bullet : GameObject {
 
             return true;
         }
-
-        enemiesManager.DamageEnemiesAt(this);
+        
+        if (sender is Player && enemiesManager is not null) {
+            enemiesManager.DamageEnemiesAt(this);
+        }
+        
         return Level.IsPosOutOfBounds(x + dx, y + dy);
     }
 

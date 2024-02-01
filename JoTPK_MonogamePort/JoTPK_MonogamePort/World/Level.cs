@@ -3,12 +3,14 @@ using JoTPK_MonogamePort.Entities.Enemies;
 using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.Utils;
-using Microsoft.Xna.Framework.Graphics;
+
 using System.Collections.Generic;
 using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
+
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Input;
@@ -19,12 +21,14 @@ public class Level {
 
     public const int Width = 16;
     
-    private static readonly object Lock = new();
-    private (int x, int y) _location;
     private int _levelNumber;
     private bool _paused;
     private bool _prevPState;
     public bool GameOver { get; set; }
+    public bool CanSwitchLevel { get; set; }
+
+    // todo temp
+    public int LevelNum => _levelNumber;  
     
     private readonly GameObject[,] _field;
     private readonly List<GameObject> _items;
@@ -33,37 +37,47 @@ public class Level {
     private readonly List<Wall> _solidWalls;
     private readonly Counters _counters;
     private readonly LevelTimer _levelTimer;
+    private readonly PowerUpDisplay _pwuDisplay;
     private Player _player;
-    private PauseScreen? _gameOverScreen;
-    private PauseScreen? _pauseScreen;
+    private Trader _trader;
+    private MenuScreen? _gameOverScreen;
+    private MenuScreen? _pauseScreen;
     private SpriteFont? _pixelFont;
 
-    public Level(int levelNumber) {
+    public Level(int levelNumber = 0) {
         _levelNumber = levelNumber;
-        _field = new GameObject[Width, Width];
-        _items = new List<GameObject>();
-        _location = (Consts.ObjectSize, Consts.ObjectSize);
-        _enemiesManager = new EnemiesManager();
-        _player = new Player(Width / 2 * Consts.ObjectSize, Width / 2 * Consts.ObjectSize, this, _enemiesManager);
-        _spawners = new List<Wall>();
-        _solidWalls = new List<Wall>();
-        _levelTimer = new LevelTimer(Consts.LevelXOffset + 20, Consts.LevelYOffset + Consts.LevelWidth + 20);
-        _counters = new Counters(_player, Width * Consts.ObjectSize, 0);
-        GameOver = false;
         _paused = false;
         _prevPState = false;
+        GameOver = false;
+        CanSwitchLevel = false;
+        
+        _field = new GameObject[Width, Width];
+        _items = new List<GameObject>();
+        _spawners = new List<Wall>();
+        _solidWalls = new List<Wall>();
+        _enemiesManager = new EnemiesManager();
+        
+        _trader = new Trader(8 * Consts.ObjectSize, 5 * Consts.ObjectSize);
+        _player = new Player(Width / 2 * Consts.ObjectSize, Width / 2 * Consts.ObjectSize, this, _trader, _enemiesManager);
+        
+        _levelTimer = new LevelTimer(Consts.LevelXOffset, Consts.LevelYOffset + Consts.LevelWidth + 2 * 6);
+        _pwuDisplay = new PowerUpDisplay(Consts.LevelXOffset + Consts.LevelWidth + 10, Consts.LevelYOffset, _player);
+        _counters = new Counters(_player, Consts.LevelXOffset + Consts.LevelWidth,  Consts.LevelYOffset + 4 + 2 * 24);
     }
 
     public void PlaceItems() {
         //Coin c = new(4 * Consts.ObjectSize, 6 * Consts.ObjectSize, CoinValue.Coin1);
         //this.AddObject(c, Level.GetIndexes(c));
-        //for (int i = 1; i < Width - 1; i++) {
-        //    GameObject item = new SmokeBomb(i * Consts.ObjectSize, 4 * Consts.ObjectSize, this._player ,this._enemiesManager, this);
-        //    this.AddObject(item, GetIndexes(item));
-        //}
-        GameObject powerUp = new TombStone(7 * Consts.ObjectSize, 4 * Consts.ObjectSize, _player);
+        for (int i = 1; i < Width - 1; i++) {
+            GameObject item = new SmokeBomb(i * Consts.ObjectSize, 4 * Consts.ObjectSize, _enemiesManager, this);
+            this.AddObject(item, GetIndexes(item));
+            // Console.WriteLine(GetIndexes(item));
+
+        }
+        GameObject powerUp = new TombStone(7 * Consts.ObjectSize, 4 * Consts.ObjectSize);
         AddObject(powerUp, GetIndexes(powerUp));
-        GameObject powerUp2 = new WagonWheel(9 * Consts.ObjectSize, 4 * Consts.ObjectSize, _player);
+        Console.WriteLine(GetIndexes(powerUp));
+        GameObject powerUp2 = new WagonWheel(9 * Consts.ObjectSize, 4 * Consts.ObjectSize);
         AddObject(powerUp2, GetIndexes(powerUp2));
         //Coffee coffee = new(7 * Consts.ObjectSize, 4 * Consts.ObjectSize, this._player);
         //this.AddObject(coffee, LevelProperty.GetIndexes(coffee));
@@ -71,52 +85,69 @@ public class Level {
         //this.AddObject(coffee2, GetIndexes(coffee2));
     }
 
-    public void Draw(SpriteBatch sb) {
-        if (_gameOverScreen == null || _pauseScreen == null)
-            throw new NullReferenceException($"{GetType().Name} wasn't initialized");
-
-        if (GameOver) {
-            _gameOverScreen.Draw(sb);
-            return;
-        }
-        
-        if (_paused) {
-            _pauseScreen.Draw(sb);
-            return;
-        }
-
-        if (_paused) return;
-        
-        TextureManager.DrawMap("Map" + _levelNumber, sb);
-        _counters.Draw(sb, _player);
-        _levelTimer.Draw(sb);
-        
-        _enemiesManager.Draw(sb);
-
-        List<GameObject> copy;
-        copy = new List<GameObject>(_items);
-
-        foreach (GameObject item in copy) {
-            item.Draw(sb);
-        }
-        _player.Draw(sb);
-
-    }
-
     public void LoadContent(ContentManager cm, GraphicsDevice gd) {
         _pixelFont = cm.Load<SpriteFont>("PixelFont");
-        _levelTimer.LoadContent(gd);
+        _levelTimer.LoadContent(gd, cm);
         _counters.LoadContent(_pixelFont);
         string[] gameOverText = { "New Game", "Exit" };
         string[] pauseText = { "Return to game", "Exit"};
         int middle = Width * Consts.ObjectSize / 2;
         Vector2 size = _pixelFont.MeasureString(gameOverText.GetLongestString()); //in pixels
         Vector2 pos = new(middle - (int)(size.X / 2), middle - (int)(size.Y / 2) - 5 - (int)size.Y);
-        _gameOverScreen = new PauseScreen((int)pos.X, (int)pos.Y, this, new [] { NewGame, Exit }, gameOverText);
-        _pauseScreen = new PauseScreen((int)pos.X, (int)pos.Y, this, new [] { game => _paused = false, Exit }, pauseText);
+        _gameOverScreen = new MenuScreen((int)pos.X, (int)pos.Y, new [] { NewGame, Exit }, gameOverText);
+        _pauseScreen = new MenuScreen((int)pos.X, (int)pos.Y, new [] { _ => _paused = false, Exit }, pauseText);
+        _trader.LoadContent(_pixelFont);
         _gameOverScreen.LoadContent(_pixelFont, 20f);
         _pauseScreen.LoadContent(_pixelFont, 20f);
     }
+    
+    public void Draw(SpriteBatch sb) {
+        
+        sb.Begin(
+            SpriteSortMode.Deferred, 
+            BlendState.AlphaBlend, 
+            SamplerState.PointClamp, //nearest neighbour
+            DepthStencilState.None, 
+            RasterizerState.CullCounterClockwise, 
+            null, 
+            Matrix.Identity
+        );
+        
+        if (_gameOverScreen == null || _pauseScreen == null)
+            throw new NullReferenceException($"{GetType().Name} wasn't initialized");
+
+        if (GameOver) {
+            _gameOverScreen.Draw(sb);
+            sb.End();
+            return;
+        }
+        
+        if (_paused) {
+            _pauseScreen.Draw(sb);
+            sb.End();
+            return;
+        }
+        
+        TextureManager.DrawMap("Map" + _levelNumber, sb);
+        _counters.Draw(sb, _player);
+        
+        _enemiesManager.Draw(sb);
+
+        List<GameObject> copy = new(_items);
+
+        // Console.WriteLine(copy.Count);
+        foreach (GameObject item in copy) {
+            item.Draw(sb);
+        }
+        
+        _levelTimer.Draw(sb, _levelNumber);
+        _pwuDisplay.Draw(sb);
+        _trader.Draw(sb);
+        _player.Draw(sb);
+        
+        sb.End();
+    }
+
     
     public void Update(GameTime gt, Game game) {
         if (_gameOverScreen == null || _pauseScreen == null)
@@ -131,32 +162,51 @@ public class Level {
             _pauseScreen.Update(game);
             return;
         }
+        
+        if (Keyboard.GetState().IsKeyDown(Keys.E) && CanSwitchLevel) {
+            CanSwitchLevel = false;
+            _enemiesManager.CanSpawn = true;
+            _enemiesManager.Timer = 0f;
+            _levelTimer.Reset();
+            _levelNumber++;
+            if (_levelNumber is 4 or 8 or 12) {
+                _levelNumber++;
+            }
+            if (_levelNumber >= TextureManager.MapCount) {
+                _levelNumber = 0;
+            }
+            _player.ResetPosition(_levelNumber);
+
+            Generate(game);
+        }
 
         bool currentPState = Keyboard.GetState().IsKeyDown(Keys.P);
-        // Check if the P key has just been pressed (not held down)
         if (currentPState && !_prevPState) {
             _paused = !_paused;
         }
         _prevPState = currentPState;
-
-        if (_paused) return;
         
-        _levelTimer.Update(_player,gt);
         _player.Update(this, _enemiesManager, gt);
+        
         _enemiesManager.Update(_player, this, gt);
+        if (_enemiesManager.CanSpawn) {
+            _levelTimer.Update(_player, gt, _enemiesManager, _levelNumber);
+        }
+        
         List<GameObject> copy = new(_items);
         foreach (GameObject o in copy) {
-            if (o is IItem item) {
+            if (o is IItem item) { 
                 item.Update(_player, this, gt);
             }
         }
+        _trader.Update(this, _player , gt);
         //this.testEnemy.Move(this._player);
     }
 
     public void Generate(Game game) {
         string? map = null;
         try {
-            map = File.ReadAllText($"{MainClass.BaseDirectory}/Resources/Levels/level{_levelNumber}Map.txt");
+            map = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}/../../../Resources/Levels/level{_levelNumber}Map.txt");
         }
         catch (IOException e) {
             Console.WriteLine($"Invalid level number => {_levelNumber}");
@@ -178,7 +228,7 @@ public class Level {
             if (!float.TryParse(firstLine[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float probability))
                 throw new ArgumentException("Cant parse " + firstLine[i + 1] + " to float");
 
-            enemyTypeList.Add(enemyType, probability); //todo horde size
+            enemyTypeList.Add(enemyType, probability);
         }
 
         _enemiesManager.SetEnemyTypeList(enemyTypeList);
@@ -234,7 +284,7 @@ public class Level {
 
     public void AddObject(GameObject gameObject, int indexX, int indexY) {
         if (IsIndexOutOfBounds(indexX, indexY) || IsOccupiedAt((indexX, indexY))) return;
-
+        
         _field[indexY, indexX] = gameObject;
         _items.Add(gameObject);
     }
@@ -287,8 +337,7 @@ public class Level {
             (int)((yMiddle - Consts.LevelYOffset) / Consts.ObjectSize)
         );
     }
-
-
+    
     public static (int x, int y) GetIndexes(GameObject o) {
         return GetIndexes(o.XMiddle, o.YMiddle);
     }
@@ -299,10 +348,16 @@ public class Level {
         _levelNumber = 0;
         _levelTimer.Reset();
         Generate(game);
-        _player = new Player(Player.Middle, Player.Middle, this, _enemiesManager);
+        _player = new Player(Player.Middle, Player.Middle, this, _trader, _enemiesManager);
     }
     
     private void Exit(Game game) {
         game.Exit();
+    }
+
+    public void ResetLevelTimer() {
+        if (_levelTimer.Width <= 0 && !GameOver) {
+            _levelTimer.AddSeconds(20, _levelNumber);
+        }
     }
 }
