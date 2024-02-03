@@ -38,7 +38,7 @@ public class Trader : GameObject {
     public GameElements Body { private get; set; }
 
     // private TraderState _state = TraderState.OutOfBounds;
-    public ITraderState TraderState { private get; set; } = new Still();
+    public ITraderState TraderAction { private get; set; } = new Still();
 
     public Trader(float x, float y) : base(x, y) {
         Pos = new Vector2(x, y);
@@ -71,11 +71,11 @@ public class Trader : GameObject {
     }
 
     public void Update(Level level, Player player, GameTime gt) {
-        TraderState.DoAction(this, level, player , gt);
+        TraderAction.DoAction(this, level, player , gt);
     }
 
     public void PickUpUpgrade(Player player, Level level) {
-        if (TraderState is not Still)
+        if (TraderAction is not Still)
             return;
 
         RectangleF hitBox = player.HitBox;
@@ -90,7 +90,7 @@ public class Trader : GameObject {
 
                 player.Money -= item.Price;
                 item.PickUp(player, level);
-                TraderState = new MovingUp();
+                TraderAction = new MovingUp();
                 Body = Sprites[SpriteNum];
                 
                 if (_upgradeLevels[i] < _shop[i].Length - 1) {
@@ -105,7 +105,7 @@ public class Trader : GameObject {
 
     // onLevelSwitch
     public void Hide() {
-        TraderState = new OutOfBounds();
+        TraderAction = new OutOfBounds();
         Pos = new Vector2(Pos.X, -32);
     }
     
@@ -124,7 +124,7 @@ public class Trader : GameObject {
         }
         
         
-        if (TraderState is Still) {
+        if (TraderAction is Still) {
             TextureManager.DrawObject(GameElements.TraderFrame, FramePos.X, FramePos.Y, sb);
             for (int i = 0; i < ItemCount; i++) {
                 Upgrade item = _shop[i][_upgradeLevels[i]];
@@ -150,8 +150,8 @@ public class Trader : GameObject {
 }
 
 public interface ITraderState {
-    protected const float MoveInterval = 0.02f;
-    protected const float AnimationInterval = 0.125f;
+    protected const float MoveInterval = 20f;
+    protected const float AnimationInterval = 125f;
     
     static void DoMoveAnimation(Trader trader) {
         trader.SpriteNum = (trader.SpriteNum + 1) % Trader.Sprites.Length;
@@ -161,17 +161,14 @@ public interface ITraderState {
 }
 
 public class OutOfBounds : ITraderState {
-    private const float TempInterval = 5f;
-    private float _timer;
+    // private const float TempInterval = 5000f;
+    // private float _timer;
     
     public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
-        _timer += gt.ElapsedGameTime.Milliseconds / 1000f;
-        if (_timer >= TempInterval) {
-            _timer = 0;
-            trader.TraderState = new MovingDown();
-        }
-        // if (level.LevelNum != 0 && level.LevelNum % 2 == 0) {
-        //     
+        // _timer += gt.ElapsedGameTime.Milliseconds;
+        // if (_timer >= TempInterval) {
+        //     _timer = 0;
+        //     trader.TraderAction = new MovingDown();
         // }
     }
 }
@@ -194,7 +191,7 @@ public class MovingDown : ITraderState {
     private float _animationTimer;
     
     public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
-        _moveTimer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        _moveTimer += gt.ElapsedGameTime.Milliseconds;
         if (_moveTimer < ITraderState.MoveInterval)
             return;
         
@@ -202,14 +199,14 @@ public class MovingDown : ITraderState {
         if (trader.Pos.Y < 5 * Consts.ObjectSize) {
             trader.Pos += new Vector2(0, Trader.MovingSpeed);
 
-            _animationTimer += gt.ElapsedGameTime.Milliseconds / 1000f;
+            _animationTimer += gt.ElapsedGameTime.Milliseconds;
             if (_animationTimer >= ITraderState.AnimationInterval) {
                 _animationTimer = 0;
                 ITraderState.DoMoveAnimation(trader);
             }
                 
         } else if (trader.Pos.Y.IsEqualTo(5 * Consts.ObjectSize)) {
-            trader.TraderState = new Still();
+            trader.TraderAction = new Still();
             trader.Body = GameElements.TraderIdle;
         }
     }
@@ -221,7 +218,7 @@ public class MovingUp : ITraderState {
     private float _animationTimer;
     
     public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
-        _moveTimer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        _moveTimer += gt.ElapsedGameTime.Milliseconds;
         if (_moveTimer < ITraderState.MoveInterval)
             return;
         
@@ -229,14 +226,14 @@ public class MovingUp : ITraderState {
         if (trader.Pos.Y > -Consts.ObjectSize) {
             trader.Pos -= new Vector2(0, Trader.MovingSpeed);
                 
-            _animationTimer += gt.ElapsedGameTime.Milliseconds / 1000f;
+            _animationTimer += gt.ElapsedGameTime.Milliseconds;
             if (_animationTimer >= ITraderState.AnimationInterval) {
                 _animationTimer = 0;
                 ITraderState.DoMoveAnimation(trader);
             }
             
         } else if (trader.Pos.Y.IsEqualTo(-Consts.ObjectSize)) {
-            trader.TraderState = new OutOfBounds();
+            trader.TraderAction = new OutOfBounds();
         }
     }
 }

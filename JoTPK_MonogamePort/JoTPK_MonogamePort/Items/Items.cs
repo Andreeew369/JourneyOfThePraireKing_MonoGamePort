@@ -45,7 +45,7 @@ public class Coin : GameObject, IItem {
     }
 
     public void Update(Player player, Level level, GameTime gt) {
-        Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        Timer += gt.ElapsedGameTime.Milliseconds;
         if (Timer >= IItem.DespawnTime) {
             level.RemoveObject(this, Level.GetIndexes(this));   
         }
@@ -73,7 +73,7 @@ public class HealthPoint : GameObject, IItem {
     }
 
     public void Update(Player player, Level level, GameTime gt) {
-        Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        Timer += gt.ElapsedGameTime.Milliseconds;
         if (Timer >= IItem.DespawnTime) {
             level.RemoveObject(this, Level.GetIndexes(this));   
         }

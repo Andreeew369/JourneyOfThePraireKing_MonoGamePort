@@ -9,13 +9,16 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
-
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Input;
 
 namespace JoTPK_MonogamePort.World;
+
+public delegate void GameEventHandler();
+public delegate Task AsyncGameEventHandler();
 
 public class Level {
 
@@ -63,6 +66,15 @@ public class Level {
         _levelTimer = new LevelTimer(Consts.LevelXOffset, Consts.LevelYOffset + Consts.LevelWidth + 2 * 6);
         _pwuDisplay = new PowerUpDisplay(Consts.LevelXOffset + Consts.LevelWidth + 10, Consts.LevelYOffset, _player);
         _counters = new Counters(_player, Consts.LevelXOffset + Consts.LevelWidth,  Consts.LevelYOffset + 4 + 2 * 24);
+
+
+        _enemiesManager.LevelCompletionEvent += () => {
+            CanSwitchLevel = true;
+            if ((_levelNumber + 1) % 2 == 0) {
+                _trader.TraderAction = new MovingDown();
+            }
+        };
+
     }
 
     public void PlaceItems() {
@@ -87,7 +99,6 @@ public class Level {
 
     public void LoadContent(ContentManager cm, GraphicsDevice gd) {
         _pixelFont = cm.Load<SpriteFont>("PixelFont");
-        _levelTimer.LoadContent(gd, cm);
         _counters.LoadContent(_pixelFont);
         string[] gameOverText = { "New Game", "Exit" };
         string[] pauseText = { "Return to game", "Exit"};
@@ -169,6 +180,7 @@ public class Level {
             _enemiesManager.Timer = 0f;
             _levelTimer.Reset();
             _levelNumber++;
+            _trader.Hide();
             if (_levelNumber is 4 or 8 or 12) {
                 _levelNumber++;
             }
@@ -312,6 +324,7 @@ public class Level {
         _field[indexY, indexX] = new EmptyObject();
         _items.Remove(gameObject);
     }
+    
     public bool IsOccupiedAt((int x, int y) indexes) {
         return _field[indexes.y, indexes.x] is not EmptyObject;
     }
@@ -341,6 +354,16 @@ public class Level {
     public static (int x, int y) GetIndexes(GameObject o) {
         return GetIndexes(o.XMiddle, o.YMiddle);
     }
+    
+    public void AddPenaltySecondsToTimer() {
+        const int seconds = 5;
+        if (_levelTimer.Width + LevelTimer.SecondsToPixels(seconds) > LevelTimer.DefaultLength) {
+            _levelTimer.AddSeconds(LevelTimer.DefaultLength - _levelTimer.Width, _levelNumber);
+        }
+        else {
+            _levelTimer.AddSeconds(seconds, _levelNumber);
+        }
+    }
 
     private void NewGame(Game game) {
         GameOver = false;
@@ -348,16 +371,11 @@ public class Level {
         _levelNumber = 0;
         _levelTimer.Reset();
         Generate(game);
-        _player = new Player(Player.Middle, Player.Middle, this, _trader, _enemiesManager);
+        _player.Restart(this);
     }
     
     private void Exit(Game game) {
         game.Exit();
     }
 
-    public void ResetLevelTimer() {
-        if (_levelTimer.Width <= 0 && !GameOver) {
-            _levelTimer.AddSeconds(20, _levelNumber);
-        }
-    }
 }

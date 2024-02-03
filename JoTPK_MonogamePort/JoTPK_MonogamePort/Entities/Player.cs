@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using System.Drawing;
 using System.Linq;
-using System.Timers;
+using System.Threading.Tasks;
 using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.Utils;
@@ -10,15 +10,21 @@ using JoTPK_MonogamePort.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Timer = System.Timers.Timer;
 
 namespace JoTPK_MonogamePort.Entities;
 
-public delegate void EventHandler();
-
 public class Player : GameObject, ISender {
-    private const float AnimationInterval = 0.125f; //seconds
+    
+    public event GameEventHandler? PlayerDeathEvent;
+    public event AsyncGameEventHandler? RespawnEvent;
+    
+    private void OnPlayerDeath() => PlayerDeathEvent?.Invoke();
+    private void OnRespawn() => RespawnEvent?.Invoke(); 
+    
+    private const float AnimationInterval = 125f; //seconds
     private const int RespawnTime = 3000;
+    private const float StartingSpeed = 3.5f;
+    private const float StartingFireRate = 0.3f;
 
     public static readonly int Middle = Level.Width / 2 * Consts.ObjectSize;
     
@@ -32,10 +38,10 @@ public class Player : GameObject, ISender {
 
     public int XIndex { get; private set; }
     public int YIndex { get; private set; }
-    public float DefaultSpeed { get; set; } = 3.5f;
+    public float DefaultSpeed { get; set; } = StartingSpeed;
     public float Speed { get; set; }
     
-    public float DefaultFireRate { get; set; } = 0.3f;
+    public float DefaultFireRate { get; set; } = StartingFireRate;
     public float FireRate { get; set; }
 
     public int Money { get; set; }
@@ -75,7 +81,6 @@ public class Player : GameObject, ISender {
     private readonly Level _level;
     private readonly Trader _trader;
     private readonly EnemiesManager _enemiesManager;
-    private readonly Timer _respawnTimer;
     private readonly BulletManager _bulletManager;
 
     public Player(int x, int y, Level level, Trader trader, EnemiesManager em) : base(x, y) {
@@ -94,11 +99,31 @@ public class Player : GameObject, ISender {
         _level = level;
         _trader = trader;
         _enemiesManager = em;
-        _respawnTimer = new Timer(RespawnTime) { AutoReset = false };
-        _respawnTimer.Elapsed += OnRespawn;
         _activePowerUps = new HashSet<IPowerUp>();
         _surroundings = level.GetSurroundings(XIndex, YIndex);
         _bulletManager = new BulletManager(_level, GameElements.Bullet1);
+
+        RespawnEvent += Respawn;
+    }
+
+    public void Restart(Level level) {
+        (XIndex, YIndex) = Level.GetIndexes(Middle, Middle);
+        DefaultSpeed = StartingSpeed;
+        Speed = DefaultSpeed;
+        Money = 0; 
+        Health = 3; 
+        DefaultFireRate = StartingFireRate;
+        FireRate = DefaultFireRate;
+        _shootingTypes.Clear();
+        _shootingTypes.Add(ShootingType.Normal);
+        var activePowerUpsCopy = new HashSet<IPowerUp>(_activePowerUps);
+        foreach (IPowerUp powerUp in activePowerUpsCopy) {
+            powerUp.Deactivate(this);
+        }
+        InventoryPowerUp = EmptyPowerUp.Empty;
+        BulletDamage = 1;
+        IsDead = false;
+        _surroundings = level.GetSurroundings(XIndex, YIndex);
     }
 
     public ShootingType ShootingType {
@@ -185,7 +210,7 @@ public class Player : GameObject, ISender {
         }
 
         if (IsMoving) {
-            _timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+            _timer += gt.ElapsedGameTime.Milliseconds;
             bool updateSprites = false;
             if (_timer >= AnimationInterval) {
                 _timer = 0;
@@ -262,19 +287,32 @@ public class Player : GameObject, ISender {
         }
     }
     
-    public void KillPlayer() {
+    private Task Respawn() {
+        IsDead = false;
+        ResetPosition(_level.LevelNum);
+        _enemiesManager.CanSpawn = true;
+        //todo stuff when player dies
+
+        return Task.CompletedTask;
+    }
+    
+    public async void KillPlayer() {
         Health--;
         _level.ClearLevel();
         _bulletManager.Clear();
+        foreach (IPowerUp powerUp in _activePowerUps) {
+            powerUp.Deactivate(this);
+        }
         if (Health <= 0) {
             _level.GameOver = true;
             return;
         }
 
-        _level.ResetLevelTimer();
+        _level.AddPenaltySecondsToTimer();
         IsDead = true;
-        if (!_level.GameOver) {
-            _respawnTimer.Start();
+        if (!_level.GameOver) { 
+            await Task.Delay(RespawnTime);
+            OnRespawn();
         } 
     }
 
@@ -363,13 +401,6 @@ public class Player : GameObject, ISender {
         X = Middle;
     }
 
-    private void OnRespawn(object? sender, ElapsedEventArgs e) {
-        IsDead = false;
-        (X, Y) = (Middle, Middle);
-        _enemiesManager.CanSpawn = true;
-        
-        //todo stuff when player dies
-    }
 
     private void ActivatePowerUp() {
         InventoryPowerUp.Activate(this, true);
@@ -396,10 +427,6 @@ public class Player : GameObject, ISender {
             _ => GameElements.Player
         };
     }
-
-    public event EventHandler PlayerDeathEvent;
-    
-    protected virtual void OnPlayerDeath() => PlayerDeathEvent?.Invoke();
     
 }
 

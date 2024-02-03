@@ -45,18 +45,13 @@ public class SpikeBall : Enemy {
             }
 
             if (ActualSprite == GameElements.SpikeballBall4) return;
-            Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+            Timer += gt.ElapsedGameTime.Milliseconds;
             if (Timer >= AnimationInterval) {
                 Timer = 0;
                 SpriteNumber++;
             }
 
             ActualSprite = Sprites[SpriteNumber];
-
-            //if (this._transformationTick > EnemiesManager.AnimationInterval * 3) return;
-            //this._transformationTick++;
-            //int index = this._transformationTick / EnemiesManager.AnimationInterval;
-            //ObjectType = Sprites[3 + index];
         }
     }
 

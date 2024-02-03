@@ -67,7 +67,7 @@ public class CowBoy : Enemy, IBoss, ISender {
     }
 
     public override void Update(Player player, List<Enemy> enemies, GameTime gt) {
-        Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        Timer += gt.ElapsedGameTime.Milliseconds;
         // Console.WriteLine(_timer);
         if (Timer >= AnimationInterval) {
             Timer = 0;

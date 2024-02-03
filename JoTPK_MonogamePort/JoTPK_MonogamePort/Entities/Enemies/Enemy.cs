@@ -15,7 +15,7 @@ public abstract class Enemy : GameObject {
 
     protected const int MinDistance = 3;
 
-    protected const float AnimationInterval = 0.125f;
+    protected const float AnimationInterval = 125f;
 
     public EnemyState State { get; set; }
     public EnemyType Type { get; set; }
@@ -75,7 +75,7 @@ public abstract class Enemy : GameObject {
         didChange = true;
     }
 
-    public void DropItem(Level level, Player player, EnemiesManager? enemiesManager) {
+    public void DropItem(Level level, Player player, EnemiesManager enemiesManager) {
         Random rand = new();
 
         if (rand.NextDouble() < 0.1) {
@@ -112,13 +112,11 @@ public abstract class Enemy : GameObject {
     }
 
     public virtual void Update(Player player, List<Enemy> enemies,  GameTime gt) {
-        Timer += gt.ElapsedGameTime.Milliseconds / 1000f;
-        // Console.WriteLine(_timer);
+        Timer += gt.ElapsedGameTime.Milliseconds;
         if (Timer >= AnimationInterval) {
             Timer = 0;
             SpriteNumber = (SpriteNumber + 1) % 2;
         }
-        // Console.WriteLine(SpriteNumber);
 
         ActualSprite = _sprites[SpriteNumber];
         Move(player, enemies);

@@ -2,46 +2,38 @@ using System;
 using JoTPK_MonogamePort.Entities;
 using JoTPK_MonogamePort.Utils;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.World; 
 
 public class LevelTimer {
-
-    public int Width => _timerBounds.Width;
+    private const float Miliseconds = 20_000f;
     
-    private const float Seconds = 20f;
-    private static readonly int DefaultLength = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient].Width;
-    
+    public static readonly int DefaultLength = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient].Width;
     //90 sekund => 472px -> dlzka casovaca
     //x sekund => 1px
     //x = 90 / 472
-    private static readonly float UpdateInterval = Seconds / DefaultLength; //how much seconds is one pixel
-    // private Texture2D? _gradient;
+    private static readonly float UpdateInterval = Miliseconds / DefaultLength; //how much miliseconds is one pixel
     private Rectangle _timerBounds;
     private float _timer;
 
     private readonly Vector2 _coords;
-    // private Effect _gradient;
+    public int Width => _timerBounds.Width;
 
     public LevelTimer(int x, int y) {
-        Console.WriteLine(UpdateInterval);
-        // _timerBounds = new Rectangle(x, y, DefaultLength, 2 * 4);
         _timerBounds = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient];
         _coords = new Vector2(x, y);
         _timer = 0f;
     }
-
-    public void LoadContent(GraphicsDevice gd, ContentManager cm) {
-        // _gradient = Functions.CreateGradientTexture(gd,new Color(1f,0,0), new Color(0, 1f, 0), _timerBounds.Width, _timerBounds.Height);
-        // _gradient = cm.Load<Effect>("GradientShader");
-    }
-
+    
+    /// <summary>
+    /// Vykreslovanie casovaca
+    /// </summary>
+    /// <param name="sb">SpriteBatch</param>
+    /// <param name="levelNumber">Cislo aktualneho levelu</param>
     public void Draw(SpriteBatch sb, int levelNumber) {
-        if (levelNumber is 4 or 8 or 12) return;
-        // if (_gradient == null)
-        //     throw new NullReferenceException($"{GetType().Name} wasn't loaded");
+        if (levelNumber is 4 or 8 or 12)
+            return;
         
         TextureManager.DrawGuiElement(GuiElement.TimerFrame, _coords.X, _coords.Y, sb);
         if (_timerBounds.Width > 0) {
@@ -49,10 +41,18 @@ public class LevelTimer {
         }
     }
     
+    /// <summary>
+    /// Aktualizacia casovaca
+    /// </summary>
+    /// <param name="player">Hrac</param>
+    /// <param name="gt">GrameTime v hre</param>
+    /// <param name="enemiesManager">EnemieManager</param>
+    /// <param name="levelNumber">Cislo Aktualneho levelu</param>
     public void Update(Player player, GameTime gt, EnemiesManager enemiesManager, int levelNumber) {
-        if (levelNumber is 4 or 8 or 12 || player.IsDead) return;
+        if (levelNumber is 4 or 8 or 12 || player.IsDead) 
+            return;
         
-        _timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        _timer += gt.ElapsedGameTime.Milliseconds;
         if (_timer >= UpdateInterval && _timerBounds.Width > 0) {
             _timerBounds.Width--;
             _timer = 0;
@@ -63,15 +63,27 @@ public class LevelTimer {
         }
     }
 
+    /// <summary>
+    /// Resetnutie Casovaca
+    /// </summary>
     public void Reset() {
         _timerBounds.Width = DefaultLength;
         _timer = 0;
     }
 
+    /// <summary>
+    /// Pridanie sekund k casovacu
+    /// </summary>
+    /// <param name="seconds">Pocet sekund</param>
+    /// <param name="levelNumber">Cislo aktualneho levelu</param>
     public void AddSeconds(int seconds, int levelNumber) {
         //second => x px
         //Update interval => 1px
         if (levelNumber is 4 or 8 or 12) return;
-        _timerBounds.Width = (int)Math.Round(seconds / UpdateInterval);
+        _timerBounds.Width += SecondsToPixels(seconds);
+    }
+
+    public static int SecondsToPixels(int seconds) {
+        return (int)Math.Round(seconds / UpdateInterval);
     }
 }

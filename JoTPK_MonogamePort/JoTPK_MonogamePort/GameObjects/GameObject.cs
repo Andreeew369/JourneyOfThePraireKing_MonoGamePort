@@ -50,7 +50,7 @@ public class Wall : GameObject {
 
     public override void Draw(SpriteBatch sb) { }
 
-    public bool IsOcupied(List<Enemy> enemies) {
+    public bool IsOccupied(List<Enemy> enemies) {
         foreach (Enemy enemy in enemies) {
             RectangleF hitBox = enemy.HitBox;
             if (IsColliding(hitBox.X, hitBox.Y, hitBox.Width, hitBox.Height)) {

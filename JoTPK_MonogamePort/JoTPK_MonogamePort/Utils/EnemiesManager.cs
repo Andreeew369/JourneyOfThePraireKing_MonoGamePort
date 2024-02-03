@@ -13,23 +13,34 @@ namespace JoTPK_MonogamePort.Utils;
 
 public class EnemiesManager {
 
-
-    //public const int AnimationInterval = (int)(GamePanel.AmountOfTicksGameLoop * 0.25); //250ms
-    public const float SpawnInterval = 2; //2 seconds
+    public event GameEventHandler? LevelCompletionEvent;
+    
+    protected virtual void OnLevelCompletion() { LevelCompletionEvent?.Invoke(); }
+    
+    public const float SpawnInterval = 2000; //2 seconds
     private const int MaxamountOfEnemies = 25;
     private static readonly Random Rand = new();
     private Dictionary<EnemyType, float> _enemyTypeList;
     private readonly List<Enemy> _enemies;
-    private float _timer = 0f;
-
+    private float _timer;
+    
     public float Timer {
         get => _timer;
         set => _timer = value;
     }
 
+    /// <summary>
+    /// Urcuje ci sa mozu nepriatelia spawnovat
+    /// </summary>
     public bool CanSpawn { get; set; }
+    /// <summary>
+    /// Urcuje ci sa nepriatelia mozu hybat
+    /// </summary>
     public bool CanMove { get; set; }
 
+    /// <summary>
+    /// Konstruktor
+    /// </summary>
     public EnemiesManager() {
         _enemyTypeList = new Dictionary<EnemyType, float>();
         _enemies = new List<Enemy>();
@@ -37,9 +48,19 @@ public class EnemiesManager {
         CanMove = true;
     }
 
-
+    /// <summary>
+    /// Nastanie zoznamu nepriatelov, ktory sa mozu spawnovat
+    /// </summary>
+    /// <param name="enemies">
+    /// Dictionary, ktory obsahuje TypNepriatela a jeho pravdepodobnost na spawnutie.
+    /// Sucet pravdepodobnosti musi davat 1 
+    /// </param>
     public void SetEnemyTypeList(Dictionary<EnemyType, float> enemies) => _enemyTypeList = enemies;
 
+    /// <summary>
+    /// Vykreslovanie nepriatelov
+    /// </summary>
+    /// <param name="sb">SpriteBatch</param>
     public void Draw(SpriteBatch sb) {
         List<Enemy> enemiesCopy = new(_enemies.Where(e => e.State is not (EnemyState.Dead or EnemyState.KilledByPlayer)));
         foreach (Enemy enemy in enemiesCopy) {
@@ -47,11 +68,14 @@ public class EnemiesManager {
         }
     }
 
+    /// <summary>
+    /// Aktualizacia stavu EnemieManageru
+    /// </summary>
+    /// <param name="player">hrac</param>
+    /// <param name="level">level</param>
+    /// <param name="gt">GameTime v hre</param>
+    /// <exception cref="NotImplementedException"></exception>
     public void Update(Player player, Level level, GameTime gt) {
-        if (_enemies.Count == 0 && !CanSpawn) {
-            level.CanSwitchLevel = true;
-        } 
-        
         CreateEnemies(level, gt);
 
         List<Enemy> enemiesCopy = new(_enemies.Count);
@@ -72,35 +96,42 @@ public class EnemiesManager {
                 default:
                     throw new NotImplementedException(enemy.State + " is not implemented");
             }
+            
+            if (_enemies.Count == 0 && !CanSpawn && !player.IsDead) {
+                // level.CanSwitchLevel = true;
+                OnLevelCompletion();
+            } 
         }
     }
 
+    /// <summary>
+    /// Vytvorenie nepriatelov
+    /// </summary>
+    /// <param name="level">Instancia triedy Level</param>
+    /// <param name="gt">GameTime v hre</param>
     private void CreateEnemies(Level level, GameTime gt) {
         if (!CanSpawn)
             return;
 
-        _timer += gt.ElapsedGameTime.Milliseconds / 1000f;
+        _timer += gt.ElapsedGameTime.Milliseconds;
         if (_timer >= SpawnInterval) {
             _timer = 0;
             if (_enemies.Count >= MaxamountOfEnemies) return;
 
+            // get spawn locations that are not occupied by enemy 
+            List<Wall> spawnLocations = level.GetSpawners.Where(e => !e.IsOccupied(_enemies)).ToList();
+            if (spawnLocations.Count == 0)
+                return;
+
             int enemyCountInWave = GetWaveSize();
-
-            List<Wall> spawnLocations = level.GetSpawners.Where(e => !e.IsOcupied(_enemies)).ToList();
-            if (spawnLocations.Count == 0) return;
-
-            while (spawnLocations.Count < enemyCountInWave) {
+            if (spawnLocations.Count < enemyCountInWave) {
                 enemyCountInWave = spawnLocations.Count;
             }
-            //Dictionary<EnemyType, float> list = new(new[] {
-            //    new KeyValuePair<EnemyType, float>(EnemyType.SpikeBall, 1),
-            //    new KeyValuePair<EnemyType, float>(EnemyType.Orc, 0.8f),
-            //    new KeyValuePair<EnemyType, float>(EnemyType.Ogre, 0.2f)
-            //});
+            
             for (int i = 0; i < enemyCountInWave; i++) {
 
                 Wall spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
-                while (spawner.IsOcupied(_enemies)) {
+                while (spawner.IsOccupied(_enemies)) {
                     spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
                 }
                 (int x, int y) = ((int, int))spawner.GetCoords;
@@ -109,6 +140,11 @@ public class EnemiesManager {
         }
     }
 
+    
+    /// <summary>
+    /// Poskodenie nepriatela na mieste kde sa nachadza gulka
+    /// </summary>
+    /// <param name="bullet">Gulka</param>
     public void DamageEnemiesAt(Bullet bullet) {
         RectangleF hitBox = bullet.HitBox;
         List<Enemy> copy = new(_enemies);
@@ -148,12 +184,20 @@ public class EnemiesManager {
                                     "Float values have to add up to 1");
     }
 
+    
+    /// <summary>
+    /// Zabitie vsetkych nepriatelov aktualne na ploche. 
+    /// Vypne sa spawnovanie a casovac sa nastavi na 0
+    /// </summary>
     public void NukeEnemies() {
         KillAll();
         CanSpawn = false;
-        _timer = SpawnInterval;
+        _timer = 0;
     }
 
+    /// <summary>
+    /// Zabitie vsetkych nepriatelov aktualne na ploche
+    /// </summary>
     public void KillAll() {
         List<Enemy> copy = new(_enemies.Count);
         copy.AddRange(_enemies);
