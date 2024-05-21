@@ -8,25 +8,23 @@ using Microsoft.Xna.Framework.Input;
 
 namespace JoTPK_MonogamePort; 
 
-public class Game1 : Game {
-    private GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
-        
+public class JourneyOfThePraireKing : Game {
+    private SpriteBatch _spriteBatch = default!;
 
     private const int NewWidth = 700;
     private const int NewHeight = 700;
 
     private readonly Level _level;
         
-    public Game1() {
-        _graphics = new GraphicsDeviceManager(this);
+    public JourneyOfThePraireKing() {
+        GraphicsDeviceManager graphics = new(this);
             
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
 
-        _graphics.PreferredBackBufferHeight = NewHeight;
-        _graphics.PreferredBackBufferWidth = NewWidth;
-        _level = new Level(2);
+        graphics.PreferredBackBufferHeight = NewHeight;
+        graphics.PreferredBackBufferWidth = NewWidth;
+        _level = new Level(3); //todo mapa 1 je priliz velka
     }
 
     protected override void Initialize() {
@@ -37,7 +35,7 @@ public class Game1 : Game {
 
     protected override void LoadContent() {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        TextureManager.Inicialize(Content);
+        TextureManager.Initialize(Content);
         _level.LoadContent(Content, GraphicsDevice);
     }
 
@@ -54,7 +52,6 @@ public class Game1 : Game {
     protected override void Draw(GameTime gameTime) {
         GraphicsDevice.Clear(Color.Black);
         
-
         _level.Draw(_spriteBatch);
 
         // float scale = 100f / customFont.MeasureString("Sample test").Y;

@@ -7,10 +7,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Shotgun power up, which changes the player's shooting type to <see cref="ShootingType.ShotGun"/>
+/// </summary>
 public class ShotGun : GameObject, IPowerUp, IItem {
 
-    private int _interval;
-    public bool IsInInventory { get; set; } = false;
+    private readonly int _interval;
+    public bool IsInInventory { get; set; }
     public float Timer { get; set; } = 0;
 
     public ShotGun(float x, float y, int interval = 12_000) : base(x, y) {
@@ -26,14 +29,13 @@ public class ShotGun : GameObject, IPowerUp, IItem {
         player.RemoveShootingType(ShootingType.ShotGun);
         IPowerUp.GlobalDeactivate(this, player);
     }
-
-
+    
     public override void Draw(SpriteBatch sb) {
         TextureManager.DrawObject(GameElements.Shotgun, RoundedX, RoundedY, sb);
     }
 
     public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
+        IPowerUp.GlobalPickup(this, player, level);
     }
 
     public void Update(Player player, Level level, GameTime gt) {

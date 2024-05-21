@@ -1,5 +1,9 @@
 ﻿namespace JoTPK_MonogamePort.Utils;
 
+/// <summary>
+/// Enum that represents every game element of the game. The numeric value of the Enum represents index in the ObjectCoords array in
+/// <see cref="TextureManager"/> static class
+/// </summary>
 public enum GameElements {
     Player,
     PlayerDown, PlayerRight, PlayerUp, PlayerLeft,
@@ -30,9 +34,13 @@ public enum GameElements {
     TraderFrame,
     Hearth, Skull, Log, Bridge,
     
-    CowboyBullet, FectorBullet
+    BossBullets
 }
 
+/// <summary>
+/// Enum that represents every game element of the game. The numeric value of the Enum represents index in the GuiElementsCoords array
+/// in <see cref="TextureManager"/> static class
+/// </summary>
 public enum GuiElement {
     TimerFrame, TimerGradient, 
     ControlsHint, EKeyHint, PowerUpFrame,

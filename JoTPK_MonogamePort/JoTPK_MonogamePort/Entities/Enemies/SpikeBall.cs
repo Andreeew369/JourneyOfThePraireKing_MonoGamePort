@@ -9,74 +9,80 @@ using Timer = System.Timers.Timer;
 
 namespace JoTPK_MonogamePort.Entities.Enemies;
 
+/// <summary>
+/// Enemy, which doesn't follow player like other enemies, but moves to a random target and after reaching it, turns into a ball
+/// </summary>
 public class SpikeBall : Enemy {
 
     private static readonly Random Rand = new();
-    private readonly Timer _stuckTimer; //for situations when the spikeball gets stuck
+    /// <summary>
+    /// Timer for checking if the Spike ball didn't move for a some time
+    /// </summary>
+    private readonly Timer _stuckTimer;
     private readonly object _lock = new();
     private (float x, float y) _target;
     private bool _isSpikeBall;
-
-    public override RectangleF HitBox => _isSpikeBall ? new RectangleF(X, Y, Consts.ObjectSize, Consts.ObjectSize) : base.HitBox;
-
+    
+    public override RectangleF HitBox => _isSpikeBall 
+        ? new RectangleF(X, Y, Consts.ObjectSize, Consts.ObjectSize) 
+        : base.HitBox;
+    
     public SpikeBall(int x, int y, Level level) : base(EnemyType.SpikeBall, x, y, level) {
         _target = GetNewTarget(level);
         _isSpikeBall = false;
         _stuckTimer = new Timer(2000);
-        _stuckTimer.Elapsed += (sender, e) => {
+        _stuckTimer.Elapsed += (_, _) => {
             lock (_lock) _target = GetNewTarget(level);
         };
         _stuckTimer.Start();
     }
-
-
+    
     public override void Update(Player player, List<Enemy> enemies, GameTime gt) {
         if (!_isSpikeBall) {
             base.Update(player, enemies, gt);
+            return;
         }
-        else {
-            if (player.IsColliding(X, Y, HitBox.Width, HitBox.Height)) {
-                if (player.IsZombie) {
-                    State = EnemyState.KilledByPlayer;
-                }
-                else if (!player.IsDead) {
-                    player.KillPlayer();
-                }
-            }
+        
 
-            if (ActualSprite == GameElements.SpikeballBall4) return;
-            Timer += gt.ElapsedGameTime.Milliseconds;
-            if (Timer >= AnimationInterval) {
-                Timer = 0;
-                SpriteNumber++;
+        if (player.IsColliding(X, Y, HitBox.Width, HitBox.Height)) {
+            if (player.IsZombie) {
+                State = EnemyState.KilledByPlayer;
             }
-
-            ActualSprite = Sprites[SpriteNumber];
+            else if (!player.IsDead) {
+                player.KillPlayer();
+            }
         }
-    }
 
-    public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(ActualSprite, RoundedX, RoundedY, sb);
+        if (ActualSprite is GameElements.SpikeballBall4) return;
+            
+        Timer += gt.ElapsedGameTime.Milliseconds;
+        if (Timer >= AnimationInterval) {
+            Timer = 0;
+            SpriteNumber++;
+        }
+
+        ActualSprite = Sprites[SpriteNumber];
     }
+    
+    public override void Draw(SpriteBatch sb) => TextureManager.DrawObject(ActualSprite, RoundedX, RoundedY, sb);
 
     public override void Move(Player player, List<Enemy> enemies) {
-
-        float distanceXToPlayer = Math.Abs(X - _target.x);
-        float distanceYToPlayer = Math.Abs(Y - _target.y);
-        (float dx, float dy) = GetDirTo(_target);
-
-
-        if (distanceXToPlayer < MinDistance) {
-            dx *= distanceXToPlayer;
-        } else {
-            dx *= Speed;
+        float distanceXToPlayer;
+        float distanceYToPlayer;
+        float dx;
+        float dy;
+        
+        lock (_lock) {
+            distanceXToPlayer = Math.Abs(X - _target.x);
+            distanceYToPlayer = Math.Abs(Y - _target.y);
+            (dx, dy) = GetDirTo(_target);
         }
 
-        if (distanceYToPlayer < MinDistance) {
-            dy *= distanceYToPlayer;
-        } else {
-            dy *= Speed;
-        }
+        if (distanceXToPlayer < MinDistance) { dx *= distanceXToPlayer; }
+        else { dx *= Speed; }
+
+        if (distanceYToPlayer < MinDistance) { dy *= distanceYToPlayer; } 
+        else { dy *= Speed; }
 
         float nextX = HitBox.X + dx;
         float nextY = HitBox.Y + dy;
@@ -86,39 +92,35 @@ public class SpikeBall : Enemy {
             dy *= Consts.InverseSqrtOfTwo;
         }
 
-        if (!CollisionDetection(nextX, HitBox.Y, player, dx, out dx, enemies)) {
-            X += dx;
-        }
+        if (!CollisionDetection(nextX, HitBox.Y, player, dx, out dx, enemies)) X += dx;
 
-        if (!CollisionDetection(HitBox.X, nextY, player, dy, out dy, enemies)) {
-            Y += dy;
-        }
+        if (!CollisionDetection(HitBox.X, nextY, player, dy, out dy, enemies)) Y += dy;
 
-        UpdateIndexes(out bool change);
-        if (change) {
+        if (UpdateIndexes()) {
             SetSurroundings(LevelProperty.GetSurroundings(XIndex, YIndex));
             _stuckTimer.Reset();
         }
 
-        if (X.IsEqualTo(_target.x) && Y.IsEqualTo(_target.y)) {
-            TurnIntoSpikeBall();
-        }
+        (float x, float y) t = _target;
+        if (X.IsEqualTo(t.x) && Y.IsEqualTo(t.y)) TurnIntoSpikeBall();
     }
-
-    public override bool CollisionDetection(float nextX, float nextY, Player player, float diffIn, out float diffOut,
-        List<Enemy> enemies) {
+    
+    public override bool CollisionDetection(float nextX, float nextY, Player player, float velocity, out float diffOut, List<Enemy> enemies) {
         if (PlayerCollision(nextX, nextY, player)) {
-            diffOut = diffIn;
+            diffOut = velocity;
             return true;
         }
-        if (WallDetection(nextX, nextY, diffIn, out diffOut)) return true;
+        if (WallDetection(nextX, nextY, velocity, out diffOut)) return true;
 
-        if (EnemiesDetection(nextX, nextY, diffIn, out diffOut, enemies)) return true;
+        if (EnemiesDetection(nextX, nextY, velocity, out diffOut, enemies)) return true;
 
-        diffOut = diffIn;
+        diffOut = velocity;
         return false;
     }
-
+    
+    /// <summary>
+    /// Set parameters of Spikeball enemy so its turns into a ball (turn into immovable Spikeball)
+    /// </summary>
     private void TurnIntoSpikeBall() {
         _stuckTimer.Stop();
         _stuckTimer.Dispose();
@@ -127,7 +129,12 @@ public class SpikeBall : Enemy {
         Timer = 0;
         SpriteNumber = 3;
     }
-
+    
+    /// <summary>
+    /// Returns new valid target coordinates
+    /// </summary>
+    /// <param name="level">Instance of current level</param>
+    /// <returns>Tuple of new valid target coordinates</returns>
     private static (float x, float y) GetNewTarget(Level level) {
         const int min = 2;
         const int max = Level.Width - 2;

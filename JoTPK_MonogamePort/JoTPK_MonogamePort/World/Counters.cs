@@ -6,6 +6,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.World; 
 
+/// <summary>
+/// Class that represents counters for health and coins
+/// </summary>
 public class Counters {
     
     private readonly Vector2 _pos;

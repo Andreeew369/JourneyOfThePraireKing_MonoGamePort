@@ -19,7 +19,7 @@ public class Bullet : GameObject {
 
     private const int HitBoxSize = 8;
     public override RectangleF HitBox => new(
-        X + (Consts.ObjectSize - HitBoxSize) / 2f ,
+        X + (Consts.ObjectSize - HitBoxSize) / 2f,
         Y + (Consts.ObjectSize - HitBoxSize) / 2f,
         HitBoxSize, HitBoxSize
     );
@@ -32,7 +32,7 @@ public class Bullet : GameObject {
 
     private (float x, float y) _velocity;
     private List<GameObject> _surroundings;
-
+    
     public Bullet(float x, float y, float xVelocity, float yVelocity, int damage, Level level, GameElements type) 
         : base(x, y) {
         _type = type;
@@ -43,6 +43,15 @@ public class Bullet : GameObject {
         Damage = damage;
     }
 
+    /// <summary>
+    /// Resets the attributes of the bullet
+    /// </summary>
+    /// <param name="x">X coordinate of the bullet</param>
+    /// <param name="y">Y coordinate of the bullet</param>
+    /// <param name="xVelocity">X velocity of the bullet</param>
+    /// <param name="yVelocity">Y velocity of the bullet</param>
+    /// <param name="damage">Damage of the bullet</param>
+    /// <param name="level">Instance of the current level</param>
     public void Reset(float x, float y, float xVelocity, float yVelocity, int damage, Level level) {
         X = x; Y = y;
         _velocity = (xVelocity, yVelocity);
@@ -66,8 +75,7 @@ public class Bullet : GameObject {
         //Console.WriteLine(_surroundings.Count);
     }
 
-    public bool CollisionDetection(float x, float y, float dx, float dy, EnemiesManager? enemiesManager, ISender sender) {
-
+    public bool CollisionDetection(float x, float y, float dx, float dy, EnemiesManager? enemiesManager, GameObject sender) {
         foreach (GameObject o in _surroundings) {
             if (!o.IsColliding(x, y, HitBox.Width, HitBox.Height)) continue;
             if (o is IItem or Wall { Type: WallType.NotShootAble or WallType.Spawner }) continue;
@@ -82,7 +90,7 @@ public class Bullet : GameObject {
         return Level.IsPosOutOfBounds(x + dx, y + dy);
     }
 
-    public void UpdateIndexes(out bool didChange) {
+    private void UpdateIndexes(out bool didChange) {
         (int indexX, int indexY) = Level.GetIndexes(XMiddle, YMiddle);
 
         if (indexX == XIndex && indexY == YIndex) {

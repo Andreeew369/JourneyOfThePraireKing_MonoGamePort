@@ -7,10 +7,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Machine gun power up, which speeds up the player's fire rate
+/// </summary>
 public class MachineGun : GameObject, IItem, IPowerUp {
 
-    private int _interval;
-    public bool IsInInventory { get; set; } = false;
+    private readonly int _interval;
+    public bool IsInInventory { get; set; }
     
     public float Timer { get; set; } = 0;
 
@@ -23,7 +26,7 @@ public class MachineGun : GameObject, IItem, IPowerUp {
     }
 
     public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
+        IPowerUp.GlobalPickup(this, player, level);
     }
 
     public void Update(Player player, Level level, GameTime gt) {

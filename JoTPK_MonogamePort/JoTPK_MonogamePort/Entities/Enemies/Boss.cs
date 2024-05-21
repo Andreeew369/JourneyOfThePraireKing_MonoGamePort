@@ -12,7 +12,10 @@ public interface IBoss {
     void Attack(Player player, Level level);
 }
 
-public class CowBoy : Enemy, IBoss, ISender {
+/// <summary>
+/// Unfinished class for a boss enemy
+/// </summary>
+public class CowBoy : Enemy, IBoss {
 
     private const int Speed = 4;
 
@@ -42,8 +45,8 @@ public class CowBoy : Enemy, IBoss, ISender {
 
     private int _spriteIndex;
     private Vector2 _playerPos;
-    private BulletManager _bulletManager;
-    private Level _level;
+    private readonly BulletManager _bulletManager;
+    private readonly Level _level;
     private bool IsMoving { get; set; } = false;
     private double ShootingTime { get; set; }
     private double ActionTimer { get; set; }
@@ -55,7 +58,7 @@ public class CowBoy : Enemy, IBoss, ISender {
         ShootingTime = GetShootingTime;
         _playerPos = new Vector2(player.X, player.Y);
         _spriteIndex = 0;
-        _bulletManager = new BulletManager(level, GameElements.CowboyBullet);
+        _bulletManager = new BulletManager(level, GameElements.BossBullets);
         _level = level;
         _actionNum = 0;
         _actionSeqNum = 0;
@@ -82,8 +85,8 @@ public class CowBoy : Enemy, IBoss, ISender {
         
     }
 
-    public override bool CollisionDetection(float nextX, float nextY, Player player, float diffIn, out float diffOut, List<Enemy> enemies) {
-        throw new System.NotImplementedException();
+    public override bool CollisionDetection(float nextX, float nextY, Player player, float velocity, out float diffOut, List<Enemy> enemies) {
+        throw new NotImplementedException();
     }
 
     public void Attack(Player player, Level level) {

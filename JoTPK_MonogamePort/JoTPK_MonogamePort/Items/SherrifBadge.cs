@@ -7,6 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items; 
 
+/// <summary>
+/// It's a combination of <see cref="Coffee"/>,  <see cref="MachineGun"/> and  <see cref="ShotGun"/> power ups
+/// </summary>
 public class SherrifBadge : GameObject, IItem, IPowerUp {
 
     private const int Interval = 24_000;
@@ -33,7 +36,7 @@ public class SherrifBadge : GameObject, IItem, IPowerUp {
         _shotGun.IsInInventory = true;
         _machineGun.IsInInventory = true;
         _coffee.IsInInventory = true;
-        IPowerUp.GlobalPickUp(this, player, level);
+        IPowerUp.GlobalPickup(this, player, level);
     }
 
     public void Update(Player player, Level level, GameTime gt) {

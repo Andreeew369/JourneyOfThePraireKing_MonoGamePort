@@ -7,15 +7,18 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Power up that kills all enemies on the map
+/// </summary>
 public class Nuke : GameObject, IPowerUp, IItem {
 
     private const int Interval = 4000;
-    private readonly EnemiesManager? _enemiesManager;
+    private readonly EnemiesManager _enemiesManager;
     public bool IsInInventory { get; set; } = false;
     
     public float Timer { get; set; } = 0;
 
-    public Nuke(float x, float y, EnemiesManager? enemiesManager) : base(x, y) {
+    public Nuke(float x, float y, EnemiesManager enemiesManager) : base(x, y) {
         _enemiesManager = enemiesManager;
     }
 
@@ -34,7 +37,7 @@ public class Nuke : GameObject, IPowerUp, IItem {
     }
 
     public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
+        IPowerUp.GlobalPickup(this, player, level);
     }
 
     public void Update(Player player, Level level, GameTime gt) {

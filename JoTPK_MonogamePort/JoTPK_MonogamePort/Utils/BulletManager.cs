@@ -1,28 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Drawing;
+using System.Linq;
+
 using JoTPK_MonogamePort.Entities;
 using JoTPK_MonogamePort.Entities.Enemies;
 using JoTPK_MonogamePort.GameObjects;
+using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.World;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Utils;
 
+/// <summary>
+/// Class that manages the movement, spawning and collision detection of bullets
+/// </summary>
 public class BulletManager {
 
-    private static readonly int ShootGunDeg = 15;
     private long _lastTime = DateTime.Now.Ticks;
-
-    private static readonly ImmutableArray<(float dirX, float dirY)> ShootGunDir = ImmutableArray.Create(
-        ((float)Bullet.Speed, 0f),
-        (Bullet.Speed, Bullet.Speed * (float)Math.Tan(Functions.DegToRadF(ShootGunDeg))),
-        (Bullet.Speed, Bullet.Speed * (float)Math.Tan(Functions.DegToRadF(360-ShootGunDeg)))
-    );
 
     public int BulletCount => _bullets.Count;
 
-    private static readonly int BulletPoolSize = 200;
+    private const int BulletPoolSize = 200;
     private readonly List<Bullet> _bullets;
     private readonly Queue<Bullet> _bulletPool;
     private GameElements _bulletType;
@@ -36,39 +35,40 @@ public class BulletManager {
         }
     }
 
-    public void Draw(SpriteBatch sb) {
-        List<Bullet> copy = new(_bullets);
+    public void Draw(SpriteBatch sb) => new List<Bullet>(_bullets).ForEach(b => b.Draw(sb));
 
-        foreach (Bullet b in copy) {
-            b.Draw(sb);
-        }
-    }
-
-    public void Update(Level level, EnemiesManager? enemiesManager, ISender sender) {
-        List<Bullet> copy = new(_bullets);
-        foreach (Bullet b in copy) {
+    
+    public void Update(Level level, EnemiesManager? enemiesManager, GameObject sender) {
+        new List<Bullet>(_bullets).ForEach(b => {
             b.Move(level, out float dx, out float dy);
-            if (b.CollisionDetection(b.HitBox.X, b.HitBox.Y, dx, dy, enemiesManager, sender) || b.Collided) {
+            RectangleF hitBox = b.HitBox;
+            if (b.CollisionDetection(hitBox.X, hitBox.Y, dx, dy, enemiesManager, sender) || b.Collided) {
                 _bullets.Remove(b);
                 RecycleBullet(b);
             }
-        }
+        });
     }
 
-    public void AddBullets(ISender sender, Level level) {
-
+    /// <summary>
+    /// Adds bullets to the list of bullets
+    /// </summary>
+    /// <param name="sender">Object that called this method</param>
+    /// <param name="level">Intance of the current level</param>
+    /// <exception cref="NotImplementedException">If new enum values for <see cref="ShootingType"/> are added and this case isn't implemented</exception>
+    public void AddBullets(GameObject sender, Level level) {
         float dx = 0;
         float dy = 0;
 
         if (sender is Player player) {
-
             long nowTime = DateTime.Now.Ticks;
-            float fireRate = player.ShootingType is ShootingType.Normal ? player.FireRate : player.DefaultFireRate;
+            float fireRate = player.ShootingType is ShootingType.Normal 
+                ? player.FireRate 
+                : player.DefaultFireRate;
             long ticks = (long)(fireRate * 10_000_000);
             
             if (_lastTime + ticks >= nowTime) return;
-
             _lastTime = nowTime;
+            
             (bool up, bool down, bool left, bool right) = player.ShootingDirBool;
             if ((up && down) || (right && left)) return;
 
@@ -85,67 +85,42 @@ public class BulletManager {
             switch (player.ShootingType) {
                 case ShootingType.Wheel: {
                     _bullets.AddRange(GetWheel(player, level));
-                } break;
+                    break;
+                } 
                 case ShootingType.ShotGun: {
                     if (Consts.DirectionToAnglesMap.TryGetValue((dx, dy), out float rad)) {
-                        (float lx, float ly) = Matrix2X2.RotationMatrix(ShootGunDir[1], rad);
-                        (float rx, float ry) = Matrix2X2.RotationMatrix(ShootGunDir[2], rad);
+                        (float lx, float ly) = Matrix2X2.RotateVector(Consts.ShootGunDir[1], rad);
+                        (float rx, float ry) = Matrix2X2.RotateVector(Consts.ShootGunDir[2], rad);
+                        
                         _bullets.AddRange(new[] {
-                            GetBulletFromPool(player.X, player.Y, dx, dy, player.BulletDamage, level),
-                            GetBulletFromPool(player.X, player.Y, lx, ly, player.BulletDamage, level), //left bullet
-                            GetBulletFromPool(player.X, player.Y, rx, ry, player.BulletDamage, level)  //right bullet
+                            GetBulletFromPool(player.X, player.Y, dx, dy, player.BulletDamage, level), // center bullet
+                            GetBulletFromPool(player.X, player.Y, lx, ly, player.BulletDamage, level), // left bullet
+                            GetBulletFromPool(player.X, player.Y, rx, ry, player.BulletDamage, level)  // right bullet
                         });
                     }
-                } break;
+                    break;
+                } 
                 case ShootingType.Normal: {
                     _bullets.Add(GetBulletFromPool(player.X, player.Y, dx, dy, player.BulletDamage, level));
-                } break;
+                    break;
+                } 
                 default: throw new NotImplementedException();
             }
-
-            //lock (_poolLock) {
-            //    Console.WriteLine(this._bulletPool.Count);
-            //}
-            //lock (_lock) {
-            //    Console.WriteLine(this._bullets.Count);
-            //}
         }
-        else if (sender is CowBoy cowBoy) {
-            
+        else if (sender is CowBoy) {
+            // todo: implement cowBoy shooting
+            throw new NotImplementedException();
         }
     }
-
-    private Bullet GetBulletFromPool(float x, float y, float dx, float dy, int damage, Level level) {
-        
-        if (_bulletPool.Count > 0) {
-            Bullet bullet = _bulletPool.Dequeue();
-            bullet.Reset(x, y, dx, dy, damage, level);
-            return bullet;
-        }
-        
-        return new Bullet(x, y, dx, dy, damage, level, _bulletType);
-    }
-
-    private void RecycleBullet(Bullet bullet) {
-        _bulletPool.Enqueue(bullet);
-    }
-
-    private IEnumerable<Bullet> GetWheel(GameObject sender, Level level) {
-        foreach ((float x, float y) dir in Consts.AllDirections) {
-            yield return GetBulletFromPool(
-                sender.X, sender.Y,
-                dir.x, dir.y,
-                sender is Player player ? player.BulletDamage : 0,
-                level
-            );
-        }
-    }
-
+    
+    /// <summary>
+    /// Returns bullets to the pool of bullets
+    /// </summary>
+    /// <param name="bullet">Bullet to be recycled</param>
+    private void RecycleBullet(Bullet bullet) => _bulletPool.Enqueue(bullet);
+    
     public void Clear() {
-        // List<Bullet> copy = new(_bullets);
-        // foreach (Bullet bullet in copy) {
-        //     _bullets.Remove(bullet);
-        // }
+        _bullets.ForEach(b => _bulletPool.Enqueue(b));
         _bullets.Clear();
     }
 
@@ -155,5 +130,38 @@ public class BulletManager {
             _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level, type));
         }
         _bulletType = type;
+    }
+    
+    /// <summary>
+    /// Creates 8 bullets that go in all directions. Used in <see cref="WagonWheel"/>
+    /// </summary>
+    /// <param name="sender"><see cref="GameObject"/> that is calling this method</param>
+    /// <param name="level">Instance of the current level</param>
+    /// <returns>Enumerable of 8 bullets</returns>
+    private IEnumerable<Bullet> GetWheel(GameObject sender, Level level) =>
+        Consts.AllDirections.Select(dir => GetBulletFromPool(
+            sender.X, sender.Y,
+            dir.x, dir.y,
+            sender is Player player ? player.BulletDamage : 0, 
+            level
+        ));
+    
+    /// <summary>
+    /// Gets a bullet from the pool of bullets or creates a new one if the pool is empty.
+    /// </summary>
+    /// <param name="x">X coordinate of the bullet</param>
+    /// <param name="y">Y coordinate of the bullet</param>
+    /// <param name="dx">X velocity of the bullet</param>
+    /// <param name="dy">Y velocity of the bullet</param>
+    /// <param name="damage">Damage of the bullet</param>
+    /// <param name="level">Instance of the current level</param>
+    /// <returns>Instance of the bullet from pool</returns>
+    private Bullet GetBulletFromPool(float x, float y, float dx, float dy, int damage, Level level) {
+        if (_bulletPool.Count == 0) 
+            return new Bullet(x, y, dx, dy, damage, level, _bulletType);
+        
+        Bullet bullet = _bulletPool.Dequeue();
+        bullet.Reset(x, y, dx, dy, damage, level);
+        return bullet;
     }
 }

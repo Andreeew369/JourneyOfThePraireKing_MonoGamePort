@@ -7,8 +7,13 @@ using Microsoft.Xna.Framework;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Interface for power ups. Recommended to implemented IItem interface and inherit from GameObject too. 
+/// </summary>
 public interface IPowerUp {
-    public static GameElements? PowerUpToDrawable(IPowerUp powerUp) {
+    // todo try to refactor this into interface that extends IItem
+    
+    public static GameElements? PowerUpToGameElement(IPowerUp powerUp) {
         return powerUp switch {
             Coffee _ => GameElements.Coffee,
             MachineGun => GameElements.MachineGun,
@@ -23,9 +28,19 @@ public interface IPowerUp {
         };
     }
     
+    /// <summary>
+    /// Update for every power up. Should be called in every power up's update method
+    /// </summary>
+    /// <param name="powerUp">Power up you want to update</param>
+    /// <param name="interval">Update interval for the power up</param>
+    /// <param name="gt">Instance of game time for current game</param>
+    /// <param name="level">Instance of current level</param>
+    /// <param name="player">Instance of player in current game</param>
+    /// <exception cref="ArgumentException">If power up is not instance of GameObject and IItem</exception>
     public static void GlobalUpdate(IPowerUp powerUp, int interval, GameTime gt, Level level, Player player) {
-        
-        if (powerUp is not (IItem or GameObject)) return;
+        if (powerUp is not (IItem or GameObject))
+            throw new ArgumentException("Invalid power up. Power up has to be instance of GameObject and IItem");
+
         ((IItem)powerUp).Timer += gt.ElapsedGameTime.Milliseconds;
         IItem item = (IItem)powerUp;
                 
@@ -40,6 +55,12 @@ public interface IPowerUp {
         }
     }
     
+    /// <summary>
+    /// Activate power up for every power up. Should be called in every power up's activate method
+    /// </summary>
+    /// <param name="powerUp">Power up you want to activate</param>
+    /// <param name="player">Instance of player in current game</param>
+    /// <param name="isInInventory">If power up activated from inventory or is activated on pickup</param>
     public static void GlobalActivate(IPowerUp powerUp, Player player, bool isInInventory) {
         if (isInInventory) {
             player.InventoryPowerUp = EmptyPowerUp.Empty;
@@ -52,15 +73,28 @@ public interface IPowerUp {
         player.AddActivePowerUp(powerUp);
     }
 
+    /// <summary>
+    /// Deactivate power up for every power up. Should be called in every power up's deactivate method
+    /// </summary>
+    /// <param name="powerUp">Instance of power up you want to deactivate</param>
+    /// <param name="player">Instance of player in current game</param>
     public static void GlobalDeactivate(IPowerUp powerUp, Player player) {
         player.RemoveActivePowerUp(powerUp);
     }
 
-    public static void GlobalPickUp(IPowerUp powerUp, Player player, Level level) {
+    /// <summary>
+    /// Pickup power up for every power up. Should be called in every power up's pick up method
+    /// </summary>
+    /// <param name="powerUp">Power up you want to pick up</param>
+    /// <param name="player">Instance of player in current game</param>
+    /// <param name="level">Instance of current level</param>
+    /// <exception cref="ArgumentException">If power up is not instance of GameObject and IItem</exception>
+    public static void GlobalPickup(IPowerUp powerUp, Player player, Level level) {
         if (powerUp is not (IItem and GameObject))
-            throw new ArgumentException(@"Invalid power up. Power up has to be instance of GameObject and IItem");
+            throw new ArgumentException("Invalid power up. Power up has to be instance of GameObject and IItem");
 
-        level.RemoveObject((GameObject)powerUp, Level.GetIndexes((GameObject)powerUp));
+        GameObject goPowerUp = (GameObject)powerUp; 
+        level.RemoveObject(goPowerUp, Level.GetIndexes(goPowerUp));
         powerUp.IsInInventory = true;
 
         if (player.InventoryPowerUp is EmptyPowerUp) {
@@ -70,11 +104,25 @@ public interface IPowerUp {
         }
     }
 
+    /// <summary>
+    /// What should happen when power up is activated
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="isInInventory"></param>
     void Activate(Player player, bool isInInventory);
+    
+    /// <summary>
+    /// What should happen when power up is deactivated
+    /// </summary>
+    /// <param name="player"></param>
     void Deactivate(Player player);
-    public bool IsInInventory { get; set; }
+    
+    bool IsInInventory { get; set; }
 }
 
+/// <summary>
+/// Placeholder power up, used as empty slot for power up
+/// </summary>
 public class EmptyPowerUp : IPowerUp {
 
     private static EmptyPowerUp? _empty;

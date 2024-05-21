@@ -8,12 +8,15 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Power up that speeds up the player
+/// </summary>
 public class Coffee : GameObject, IItem, IPowerUp {
-    public bool IsInInventory { get; set; } = false;
+    public bool IsInInventory { get; set; }
     
     public float Timer { get; set; } = 0;
 
-    private int _interval;
+    private readonly int _interval;
 
     public Coffee(int x, int y, int interval = 8000) : base(x, y) {
         _interval = interval;
@@ -26,7 +29,7 @@ public class Coffee : GameObject, IItem, IPowerUp {
     }
 
     public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
+        IPowerUp.GlobalPickup(this, player, level);
     }
 
     public void Update(Player player, Level level, GameTime gt) {

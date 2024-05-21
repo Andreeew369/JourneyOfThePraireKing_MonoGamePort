@@ -8,6 +8,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items; 
 
+/// <summary>
+/// Power up that turns the player into a zombie, which kills all enemies on contact with player
+/// </summary>
 public class TombStone : GameObject, IItem, IPowerUp {
 
     private const int Interval = 8_000;
@@ -16,17 +19,11 @@ public class TombStone : GameObject, IItem, IPowerUp {
 
     public TombStone(float x, float y) : base(x, y) { }
 
-    public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(GameElements.TombStone, RoundedX, RoundedY, sb);
-    }
+    public override void Draw(SpriteBatch sb) => TextureManager.DrawObject(GameElements.TombStone, RoundedX, RoundedY, sb);
 
-    public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
-    }
+    public void PickUp(Player player, Level level) => IPowerUp.GlobalPickup(this, player, level);
 
-    public void Update(Player player, Level level, GameTime gt) {
-        IPowerUp.GlobalUpdate(this, Interval, gt, level, player);
-    }
+    public void Update(Player player, Level level, GameTime gt) => IPowerUp.GlobalUpdate(this, Interval, gt, level, player);
 
     public void Activate(Player player, bool isInInventory) {
         player.IsZombie = true;
@@ -37,7 +34,7 @@ public class TombStone : GameObject, IItem, IPowerUp {
     public void Deactivate(Player player) {
         player.IsZombie = false;
         player.Speed = player.DefaultSpeed;
-        Console.WriteLine("deactivate");
+        // Console.WriteLine("deactivate");
         IPowerUp.GlobalDeactivate(this, player);
     }
 

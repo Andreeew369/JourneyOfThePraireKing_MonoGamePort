@@ -84,10 +84,11 @@ C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoT
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.AssemblyInfoInputs.cache
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.AssemblyInfo.cs
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.csproj.CoreCompileInputs.cache
-C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.csproj.CopyComplete
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.dll
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\refint\JoTPK_MonogamePort.dll
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.pdb
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.genruntimeconfig.cache
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\ref\JoTPK_MonogamePort.dll
 C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\bin\Debug\net6.0\Content\Icon.xnb
+C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_MonogamePort.sourcelink.json
+C:\Users\Andrej\Desktop\Coding\GitHub\C#\JourneyOfThePraireKing_MonoGamePort\JoTPK_MonogamePort\JoTPK_MonogamePort\obj\Debug\net6.0\JoTPK_Mo.B2B72C62.Up2Date

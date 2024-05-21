@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Immutable;
 using System.Drawing;
-using System.Linq;
 using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Items;
 using JoTPK_MonogamePort.Utils;
@@ -12,27 +11,30 @@ using Color = Microsoft.Xna.Framework.Color;
 
 namespace JoTPK_MonogamePort.Entities;
 
+/// <summary>
+/// Class representing a trader that sells upgrades to the player in every second level.
+/// </summary>
 public class Trader : GameObject {
+    
     public const int MovingSpeed = 2;
-    
-    private const int XUpgradeOffest = 6;
-    private const int YUpgradeOffest = 6;
+    private const int XUpgradeOffset = 6;
+    private const int YUpgradeOffset = 6;
     private const int ItemCount = 3;
-    private static readonly int YSpaceBetween = Consts.ObjectSize + 10;
-    
+    private const int YSpaceBetween = Consts.ObjectSize + 10;
+
     public static readonly ImmutableArray<GameElements> Sprites = ImmutableArray.Create(GameElements.Trader1, GameElements.Trader2);
     private static readonly Vector2 FramePos = new(7 * Consts.ObjectSize, 6 * Consts.ObjectSize);
     private static readonly ImmutableArray<Vector2> UpgradePositions = ImmutableArray.Create(
-        FramePos + new Vector2(XUpgradeOffest, YUpgradeOffest),
-        FramePos + new Vector2(XUpgradeOffest + YSpaceBetween, YUpgradeOffest),
-        FramePos + new Vector2(XUpgradeOffest + YSpaceBetween * 2, YUpgradeOffest)
+        FramePos + new Vector2(XUpgradeOffset, YUpgradeOffset),
+        FramePos + new Vector2(XUpgradeOffset + YSpaceBetween, YUpgradeOffset),
+        FramePos + new Vector2(XUpgradeOffset + YSpaceBetween * 2, YUpgradeOffset)
     );
-    private static readonly GameElements?[] UpgradeIcons = { null, null, null };
-    
-    private readonly int[] _upgradeLevels = { 0, 0, 0 };
+    private static GameElements?[] _upgradeIcons = { null, null, null };
+
+    private int[] _upgradeLevels = { 0, 0, 0 };
     private readonly ImmutableArray<ImmutableArray<Upgrade>> _shop;
     private float _scale;
-    private SpriteFont _font;
+    private SpriteFont? _font;
     public int SpriteNum { get; set; }
     public Vector2 Pos { get; set; }
     public GameElements Body { private get; set; }
@@ -45,22 +47,22 @@ public class Trader : GameObject {
         Body = GameElements.Trader1;
         _shop = ImmutableArray.Create(
             ImmutableArray.Create(
-                new Upgrade(UpgradePositions[0], Upgrades.Boots1, this),
-                new Upgrade(UpgradePositions[0], Upgrades.Boots2, this),
-                new Upgrade(UpgradePositions[0], Upgrades.HealthPoint, this)
+                new Upgrade(UpgradePositions[0], Upgrades.Boots1),
+                new Upgrade(UpgradePositions[0], Upgrades.Boots2),
+                new Upgrade(UpgradePositions[0], Upgrades.HealthPoint)
             ),
             ImmutableArray.Create(
-                new Upgrade(UpgradePositions[1], Upgrades.Gun1, this),
-                new Upgrade(UpgradePositions[1], Upgrades.Gun2, this),
-                new Upgrade(UpgradePositions[1], Upgrades.Gun3, this),
-                new Upgrade(UpgradePositions[1], Upgrades.SuperGun, this),
-                new Upgrade(UpgradePositions[1], Upgrades.SheriffBadge, this)
+                new Upgrade(UpgradePositions[1], Upgrades.Gun1),
+                new Upgrade(UpgradePositions[1], Upgrades.Gun2),
+                new Upgrade(UpgradePositions[1], Upgrades.Gun3),
+                new Upgrade(UpgradePositions[1], Upgrades.SuperGun),
+                new Upgrade(UpgradePositions[1], Upgrades.SheriffBadge)
             ),
             ImmutableArray.Create(
-                new Upgrade(UpgradePositions[2], Upgrades.Ammo1, this),
-                new Upgrade(UpgradePositions[2], Upgrades.Ammo2, this),
-                new Upgrade(UpgradePositions[2], Upgrades.Ammo3, this),
-                new Upgrade(UpgradePositions[2], Upgrades.SheriffBadge, this)
+                new Upgrade(UpgradePositions[2], Upgrades.Ammo1),
+                new Upgrade(UpgradePositions[2], Upgrades.Ammo2),
+                new Upgrade(UpgradePositions[2], Upgrades.Ammo3),
+                new Upgrade(UpgradePositions[2], Upgrades.SheriffBadge)
             )
         );
     }
@@ -71,39 +73,43 @@ public class Trader : GameObject {
     }
 
     public void Update(Level level, Player player, GameTime gt) {
-        TraderAction.DoAction(this, level, player , gt);
+        TraderAction.DoAction(this, player , gt);
     }
 
+    /// <summary>
+    /// Checking if the player has picket up one of the upgrades
+    /// </summary>
+    /// <param name="player">Instance of player in the current game</param>
+    /// <param name="level">Instance of current level</param>
     public void PickUpUpgrade(Player player, Level level) {
         if (TraderAction is not Still)
             return;
 
-        RectangleF hitBox = player.HitBox;
+        RectangleF playerHitBox = player.HitBox;
         for (int i = 0; i < ItemCount; i++) {
             Upgrade item = _shop[i][_upgradeLevels[i]];
-            if (item is GameObject itemObj) {
-                if (!itemObj.IsColliding(hitBox.X, hitBox.Y, hitBox.Width, hitBox.Height))
-                    continue;
+            if (
+                item is not GameObject itemObj ||
+                !itemObj.IsColliding(playerHitBox.X, playerHitBox.Y, playerHitBox.Width, playerHitBox.Height) ||
+                player.Money - item.Price < 0
+            ) continue;
 
-                if (player.Money - item.Price < 0)
-                    continue;
-
-                player.Money -= item.Price;
-                item.PickUp(player, level);
-                TraderAction = new MovingUp();
-                Body = Sprites[SpriteNum];
+            player.Money -= item.Price;
+            item.PickUp(player, level);
+            TraderAction = new MovingUp();
+            Body = Sprites[SpriteNum];
                 
-                if (_upgradeLevels[i] < _shop[i].Length - 1) {
-                    _upgradeLevels[i]++;
-                    UpgradeIcons[i] = item.Type.ToGameElement();
-                }
-
-                return;
+            if (_upgradeLevels[i] < _shop[i].Length - 1) {
+                _upgradeLevels[i]++;
+                _upgradeIcons[i] = item.Type.ToGameElement();
             }
+            return;
         }
     }
 
-    // onLevelSwitch
+    /// <summary>
+    /// Hides the trader from the level.
+    /// </summary>
     public void Hide() {
         TraderAction = new OutOfBounds();
         Pos = new Vector2(Pos.X, -32);
@@ -115,8 +121,8 @@ public class Trader : GameObject {
 
         const int offset = 5;
         Vector2 iconPos = new(Consts.LevelWidth + offset, Consts.LevelWidth - Consts.ObjectSize);
-        for (int i = UpgradeIcons.Length - 1; i >= 0; i--) {
-            GameElements? icon = UpgradeIcons[i];
+        for (int i = _upgradeIcons.Length - 1; i >= 0; i--) {
+            GameElements? icon = _upgradeIcons[i];
             if (icon != null) {
                 TextureManager.DrawObject(icon.Value, iconPos.X, iconPos.Y, sb);
             }
@@ -134,7 +140,7 @@ public class Trader : GameObject {
                 
                 // centering text
                 Vector2 pos = UpgradePositions[i] + new Vector2(
-                    Consts.ObjectSize / 2 - textWidth / 2,
+                    Consts.ObjectSize / 2f - textWidth / 2f,
                     Consts.ObjectSize
                 );
                 
@@ -143,38 +149,57 @@ public class Trader : GameObject {
                     Vector2.Zero, _scale * 1.1f, SpriteEffects.None, 0f);
                 sb.DrawString(_font, item.Price.ToString(), pos + new Vector2(1,0), Color.Black, 0f,
                       Vector2.Zero, _scale * 1.1f, SpriteEffects.None, 0f);
-            };
+            }
         }
         TextureManager.DrawObject(Body, Pos.X, Pos.Y, sb);
     }
+
+    /// <summary>
+    /// Resets the state of the trader when the game is ends.
+    /// </summary>
+    public void OnGameOver() {
+        _upgradeIcons = new GameElements?[] { null, null, null };
+        _upgradeLevels = new[] { 0, 0, 0 };
+    }
 }
 
+/// <summary>
+/// Interface representing the state of the trader and what the trader can do in that state.
+/// </summary>
 public interface ITraderState {
     protected const float MoveInterval = 20f;
     protected const float AnimationInterval = 125f;
     
+    /// <summary>
+    /// Static method that changes the sprite of the trader.
+    /// </summary>
+    /// <param name="trader"></param>
     static void DoMoveAnimation(Trader trader) {
         trader.SpriteNum = (trader.SpriteNum + 1) % Trader.Sprites.Length;
         trader.Body = Trader.Sprites[trader.SpriteNum];
     }
-    void DoAction(Trader trader, Level level, Player player, GameTime gt);
+
+    /// <summary>
+    /// Method that defines the action of the trader in the current state.
+    /// </summary>
+    /// <param name="trader">Instance of the trader</param>
+    /// <param name="player">Instance of the player in current game</param>
+    /// <param name="gt">Instance of the current game time</param>
+    void DoAction(Trader trader, Player player, GameTime gt);
 }
 
-public class OutOfBounds : ITraderState {
-    // private const float TempInterval = 5000f;
-    // private float _timer;
-    
-    public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
-        // _timer += gt.ElapsedGameTime.Milliseconds;
-        // if (_timer >= TempInterval) {
-        //     _timer = 0;
-        //     trader.TraderAction = new MovingDown();
-        // }
-    }
+/// <summary>
+/// Represents the state of the trader when he out of the area of the level. In this state the trader does nothing.
+/// </summary>
+public class OutOfBounds : ITraderState { 
+    public void DoAction(Trader trader, Player player, GameTime gt) { }
 }
 
+/// <summary>
+/// Represents the state of the trader when he is still and waiting for the player to buy an upgrade.
+/// </summary>
 public class Still : ITraderState {
-    public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
+    public void DoAction(Trader trader, Player player, GameTime gt) {
         (int traderXIndex, int _) = Level.GetIndexes(trader);
         if (player.XIndex == traderXIndex) {
             trader.Body = GameElements.TraderIdle;
@@ -186,11 +211,15 @@ public class Still : ITraderState {
     }
 }
 
+/// <summary>
+/// Represents the state of the trader when he is moving down towards the middle of the level.
+/// When the trader reaches the middle of the level he changes his state to <see cref="Still"/>.
+/// </summary>
 public class MovingDown : ITraderState {
     private float _moveTimer;
     private float _animationTimer;
     
-    public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
+    public void DoAction(Trader trader, Player player, GameTime gt) {
         _moveTimer += gt.ElapsedGameTime.Milliseconds;
         if (_moveTimer < ITraderState.MoveInterval)
             return;
@@ -212,12 +241,15 @@ public class MovingDown : ITraderState {
     }
 }
 
-
+/// <summary>
+/// Represents the state of the trader when he is moving up towards the top of the level.
+/// When he goes out of the level he changes his state to <see cref="OutOfBounds"/>.
+/// </summary>
 public class MovingUp : ITraderState {
     private float _moveTimer;
     private float _animationTimer;
     
-    public void DoAction(Trader trader, Level level, Player player, GameTime gt) {
+    public void DoAction(Trader trader, Player player, GameTime gt) {
         _moveTimer += gt.ElapsedGameTime.Milliseconds;
         if (_moveTimer < ITraderState.MoveInterval)
             return;

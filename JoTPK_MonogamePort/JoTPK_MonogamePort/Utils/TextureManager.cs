@@ -8,9 +8,14 @@ using Microsoft.Xna.Framework.Graphics;
 namespace JoTPK_MonogamePort.Utils; 
 
 public static class TextureManager {
-        
-    private static readonly int Size = Consts.ObjectSize;
+    
+    private const int Size = Consts.ObjectSize;
     //fix arrow
+    
+    /// <summary>
+    /// Array represents coordinates of all GUI textures in the sprite sheet. Index of the array the int
+    /// value of the <see cref="GuiElement"/> enum
+    /// </summary>
     private static readonly Rectangle[] GuiElementsCoords = {
         new(0, 0, 256, 12), //Timer frame
         new(0, 12 + 1, 248, 4), //Gradient
@@ -21,6 +26,10 @@ public static class TextureManager {
         new(91 + 28 + 24 + 6, 16 + 1, 9, 11),//Timer Icon
     };
 
+    /// <summary>
+    /// Array represents coordinates of all textures of game objects in the sprite sheet. Index of the array the int
+    /// value of the <see cref="GameElements"/> enum
+    /// </summary>
     private static readonly Rectangle[] ObjectCoords = {
         new(0, 0, Size, Size), //player
         new(Size, 0, Size, Size), //player down
@@ -132,7 +141,11 @@ public static class TextureManager {
     private static Dictionary<string, Texture2D>? _textures;
     private static Dictionary<string, Texture2D>? _mapTextures;
 
-    public static void Inicialize(ContentManager cm) {
+    /// <summary>
+    /// Initialization of the texture manager. Should be called at in the initialization method of the game
+    /// </summary>
+    /// <param name="cm"></param>
+    public static void Initialize(ContentManager cm) {
         _mapTextures = new Dictionary<string, Texture2D> {
             {"Map0", cm.Load<Texture2D>("Levels\\level0")},
             {"Map1", cm.Load<Texture2D>("Levels\\level1")},
@@ -156,17 +169,6 @@ public static class TextureManager {
 
     public static int MapCount => _mapTextures?.Count ?? 0;
 
-    public static Texture2D GetTexture(string texture) {
-        if (_mapTextures == null) 
-            throw new NullReferenceException("Texture Manager wasnt inicialized.");
-        
-        if (_mapTextures.TryGetValue(texture, out Texture2D? geTexture))
-            return geTexture;
-
-        throw new ArgumentException($"Texture manager doesnt contain {texture}");
-    }
-
-
     public static void DrawMap(string map, SpriteBatch sb) {
         if (_mapTextures == null)
             throw new NullReferenceException("Texture Manager wasnt inicialized.");
@@ -185,20 +187,21 @@ public static class TextureManager {
 
         if (_textures.TryGetValue("GameObjects", out Texture2D? texture)) {
             Rectangle coords = ObjectCoords[(int)o];
-            sb.Draw(texture, new Rectangle((int)x, (int)y, coords.Width, coords.Height), coords, Color.White);
+            // sb.Draw(texture, new Rectangle((int)x, (int)y, coords.Width, coords.Height), coords, Color.White);
+            sb.Draw(texture, new Vector2(x, y), coords, Color.White);
         }
     }
     
     public static void DrawGuiElement(GuiElement g, float x, float y, SpriteBatch sb) {
-        DrawGuiElement(g, x, y, sb, GuiElementsCoords[(int)g]);
-    }
-
-    public static void DrawGuiElement(GuiElement g, float x, float y, SpriteBatch sb, Rectangle partOfTexture) {
-        if (_textures == null) 
-            throw new NullReferenceException("Texture Manager wasnt inicialized.");
-
         if ((int)g >= ObjectCoords.Length)
             throw new NotImplementedException();
+        
+        DrawGuiElement(x, y, sb, GuiElementsCoords[(int)g]);
+    }
+
+    public static void DrawGuiElement(float x, float y, SpriteBatch sb, Rectangle partOfTexture) {
+        if (_textures == null) 
+            throw new NullReferenceException("Texture Manager wasnt inicialized.");
 
         if (_textures.TryGetValue("GuiElements", out Texture2D? texture)) {
             sb.Draw(texture, new Vector2(x, y), partOfTexture, Color.White, 0f, Vector2.Zero, 2f ,SpriteEffects.None, 0f);

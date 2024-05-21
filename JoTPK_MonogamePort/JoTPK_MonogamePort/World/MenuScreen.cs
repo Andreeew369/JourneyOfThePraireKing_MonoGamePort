@@ -5,20 +5,32 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace JoTPK_MonogamePort.World; 
+namespace JoTPK_MonogamePort.World;
 
+/// <summary>
+/// Class that represents a game menu screen with options
+/// </summary>
 public class MenuScreen {
-
     private SpriteFont? _font;
-    private int _optionNumber; //0 = new game, 1 = exit
-    private Action<Game>[] _options;
-    private string[] _texts;
-    private bool _prevUpState = false;
-    private bool _prevDownState = false;
+    private int _optionNumber; // index in _options array
+    private readonly Action<Game>[] _options;
+    private readonly string[] _texts;
+    private bool _prevUpState;
+    private bool _prevDownState;
     private float _scale;
-    private Vector2 _pos;
+    private readonly Vector2 _pos;
     private int _fontHeight;
 
+    /// <summary>
+    /// Constructor for MenuScreen
+    /// </summary>
+    /// <param name="x">X position of the menu</param>
+    /// <param name="y">Y position of the menu</param>
+    /// <param name="actions">Array of actions that will be called when the option is selected</param>
+    /// <param name="texts">Array of texts that will be displayed as options</param>
+    /// <exception cref="ArgumentException">
+    /// If the length of <paramref name="actions"/> is not the same as the length of <paramref name="texts"/>
+    /// </exception>
     public MenuScreen(int x, int y, Action<Game>[] actions, string[] texts) {
         if (actions.Length != texts.Length)
             throw new ArgumentException($"{nameof(actions)}'s length has to be the same size as {nameof(texts)}");
@@ -59,7 +71,7 @@ public class MenuScreen {
         _prevDownState = currentState;
 
         if (kst.IsKeyDown(Keys.Space) || kst.IsKeyDown(Keys.Enter)) {
-            Console.WriteLine(_optionNumber);
+            // Console.WriteLine(_optionNumber);
             _options[_optionNumber](game);
             _optionNumber = 0;
         }

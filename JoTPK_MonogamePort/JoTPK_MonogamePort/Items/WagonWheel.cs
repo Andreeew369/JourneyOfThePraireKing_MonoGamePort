@@ -7,6 +7,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.Items;
 
+/// <summary>
+/// Wagon wheel power up, which changes the player's shooting type to <see cref="ShootingType.Wheel"/>,
+/// which will make player shoot in all 8 directions
+/// </summary>
 public class WagonWheel : GameObject, IItem, IPowerUp {
 
     private const int Interval = 12_000;
@@ -15,17 +19,11 @@ public class WagonWheel : GameObject, IItem, IPowerUp {
 
     public WagonWheel(int x, int y) : base(x, y) { }
 
-    public override void Draw(SpriteBatch sb) {
-        TextureManager.DrawObject(GameElements.WagonWheel, RoundedX, RoundedY, sb);
-    }
+    public override void Draw(SpriteBatch sb) => TextureManager.DrawObject(GameElements.WagonWheel, RoundedX, RoundedY, sb);
 
-    public void PickUp(Player player, Level level) {
-        IPowerUp.GlobalPickUp(this, player, level);
-    }
+    public void PickUp(Player player, Level level) => IPowerUp.GlobalPickup(this, player, level);
 
-    public void Update(Player player, Level level, GameTime gt) {
-        IPowerUp.GlobalUpdate(this, Interval, gt, level, player);
-    }
+    public void Update(Player player, Level level, GameTime gt) => IPowerUp.GlobalUpdate(this, Interval, gt, level, player);
 
     public void Activate(Player player, bool isInInventory) {
         player.ShootingType = ShootingType.Wheel;

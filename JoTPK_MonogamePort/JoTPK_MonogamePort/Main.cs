@@ -1,7 +1,6 @@
-﻿
-using System;
-using JoTPK_MonogamePort;
+﻿using System;
 
+namespace JoTPK_MonogamePort;
 
 public class MainClass {
     // [DllImport("kernel32.dll", SetLastError = true)]
@@ -13,7 +12,7 @@ public class MainClass {
     static void Main() {
         try {
             // AllocConsole();
-            using var game = new Game1();
+            using var game = new JourneyOfThePraireKing();
             game.Run();
         } catch (Exception e) {
             Console.WriteLine(e.ToString());
