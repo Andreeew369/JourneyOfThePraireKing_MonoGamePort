@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -19,7 +20,7 @@ public static class TextureManager {
     private static readonly Rectangle[] GuiElementsCoords = {
         new(0, 0, 256, 12), //Timer frame
         new(0, 12 + 1, 248, 4), //Gradient
-        new(0, 16 + 1, 91, 40), //Controls hint
+        new(0, 16 + 1, 91, 55), //Controls hint
         new(91, 16 + 1, 28, 30), //E Key Hint
         new(91 + 28, 16 + 1, 24, 24), //PowerUp Frame
         new(91 + 28 + 24, 16 + 1, 6, 8), //Arrow
@@ -135,8 +136,7 @@ public static class TextureManager {
         new(12 * Size + 5, 2 * Size + 6, 5, 5),
     };
 
-    public static ImmutableArray<Rectangle> ObjectCoordsP => ObjectCoords.ToImmutableArray();
-    public static ImmutableArray<Rectangle> GuiElementsCoordsP => GuiElementsCoords.ToImmutableArray();
+    public static ImmutableArray<Rectangle> GuiElementsCoordsP => [..GuiElementsCoords];
 
     private static Dictionary<string, Texture2D>? _textures;
     private static Dictionary<string, Texture2D>? _mapTextures;
@@ -171,37 +171,36 @@ public static class TextureManager {
 
     public static void DrawMap(string map, SpriteBatch sb) {
         if (_mapTextures == null)
-            throw new NullReferenceException("Texture Manager wasnt inicialized.");
+            throw new NullReferenceException("Texture Manager wasn't initialized.");
 
         if (_mapTextures.TryGetValue(map, out Texture2D? texture)) {
             sb.Draw(texture, new Vector2(Consts.LevelXOffset, Consts.LevelYOffset), Color.White);
         }
     }
 
-    public static void DrawObject(GameElements o, float x, float y, SpriteBatch sb) {
+    public static void DrawObject(GameElements e, float x, float y, SpriteBatch sb) {
         if (_textures == null) 
-            throw new NullReferenceException("Texture Manager wasnt inicialized.");
+            throw new NullReferenceException("Texture Manager wasn't initialized.");
 
-        if ((int)o >= ObjectCoords.Length)
-            throw new NotImplementedException();
+        if ((int)e >= ObjectCoords.Length)
+            throw new InvalidEnumArgumentException("Invalid GameElement. Texture is not implemented in sprite sheet.");
 
         if (_textures.TryGetValue("GameObjects", out Texture2D? texture)) {
-            Rectangle coords = ObjectCoords[(int)o];
-            // sb.Draw(texture, new Rectangle((int)x, (int)y, coords.Width, coords.Height), coords, Color.White);
+            Rectangle coords = ObjectCoords[(int)e];
             sb.Draw(texture, new Vector2(x, y), coords, Color.White);
         }
     }
     
     public static void DrawGuiElement(GuiElement g, float x, float y, SpriteBatch sb) {
         if ((int)g >= ObjectCoords.Length)
-            throw new NotImplementedException();
+            throw new InvalidEnumArgumentException("Invalid GameElement. Texture is not implemented in sprite sheet.");
         
         DrawGuiElement(x, y, sb, GuiElementsCoords[(int)g]);
     }
 
     public static void DrawGuiElement(float x, float y, SpriteBatch sb, Rectangle partOfTexture) {
         if (_textures == null) 
-            throw new NullReferenceException("Texture Manager wasnt inicialized.");
+            throw new NullReferenceException("Texture Manager wasn't initialized.");
 
         if (_textures.TryGetValue("GuiElements", out Texture2D? texture)) {
             sb.Draw(texture, new Vector2(x, y), partOfTexture, Color.White, 0f, Vector2.Zero, 2f ,SpriteEffects.None, 0f);

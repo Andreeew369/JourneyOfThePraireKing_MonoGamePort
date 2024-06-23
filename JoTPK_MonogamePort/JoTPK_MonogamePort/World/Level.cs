@@ -1,7 +1,4 @@
-﻿using JoTPK_MonogamePort.Entities;
-using JoTPK_MonogamePort.Entities.Enemies;
-using JoTPK_MonogamePort.GameObjects;
-using JoTPK_MonogamePort.Items;
+﻿using JoTPK_MonogamePort.GameObjects;
 using JoTPK_MonogamePort.Utils;
 
 using System.Collections.Generic;
@@ -9,6 +6,12 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
+using System.Timers;
+
+using JoTPK_MonogamePort.GameObjects.Entities;
+using JoTPK_MonogamePort.GameObjects.Entities.Enemies;
+using JoTPK_MonogamePort.GameObjects.Items;
+
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -25,23 +28,26 @@ public class Level {
     
     public const int Width = 16;
 
-    private bool _paused;
-    private bool _prevPState;
     /// <summary>
     /// Indicates if the game is over
     /// </summary>
     public bool GameOver { get; set; }
     /// <summary>
-    /// Indicates if its possbile to switch levels
+    /// Indicates if it's possible to switch levels
     /// </summary>
-    public bool CanSwitchLevel { get; set; }
+    private bool CanSwitchLevel { get; set; }
     public int LevelNum { get; private set; }
+    /// <summary>
+    /// Gets all places that can spawn enemies
+    /// </summary>
+    public ImmutableList<Wall> Spawners => _spawners.ToImmutableList();
 
+    private bool _paused;
+    private bool _prevPState;
     private readonly GameObject[,] _field;
     private readonly List<GameObject> _items;
     private readonly EnemiesManager _enemiesManager;
     private readonly List<Wall> _spawners;
-    private readonly List<Wall> _solidWalls;
     private readonly Counters _counters;
     private readonly LevelTimer _levelTimer;
     private readonly PowerUpDisplay _pwuDisplay;
@@ -50,6 +56,9 @@ public class Level {
     private MenuScreen? _gameOverScreen;
     private MenuScreen? _pauseScreen;
     private SpriteFont? _pixelFont;
+    private readonly Timer _controlsHintTimer;
+    private readonly object _lock = new();
+    private bool _showGameControls = true;
 
     public Level(int levelNumber = 0) {
         LevelNum = levelNumber;
@@ -61,16 +70,22 @@ public class Level {
         _field = new GameObject[Width, Width];
         _items = new List<GameObject>();
         _spawners = new List<Wall>();
-        _solidWalls = new List<Wall>();
         _enemiesManager = new EnemiesManager();
         
         _trader = new Trader(8 * Consts.ObjectSize, -Consts.ObjectSize);
         _player = new Player(Width / 2 * Consts.ObjectSize, Width / 2 * Consts.ObjectSize, this, _trader, _enemiesManager);
         
         _levelTimer = new LevelTimer(Consts.LevelXOffset, Consts.LevelYOffset + Consts.LevelWidth + 2 * 6);
-        _pwuDisplay = new PowerUpDisplay(Consts.LevelXOffset + Consts.LevelWidth + 10, Consts.LevelYOffset, _player);
-        _counters = new Counters(_player, Consts.LevelXOffset + Consts.LevelWidth,  Consts.LevelYOffset + 4 + 2 * 24);
+        _pwuDisplay = new PowerUpDisplay(Consts.LevelXOffset + Consts.LevelWidth + 10, Consts.LevelYOffset);
+        _counters = new Counters(Consts.LevelXOffset + Consts.LevelWidth,  Consts.LevelYOffset + 4 + 2 * 24);
 
+        _controlsHintTimer = new Timer(5000);
+        _controlsHintTimer.Elapsed += (_, _) => {
+            lock (_lock) {
+                _showGameControls = false;
+                _controlsHintTimer.Stop();
+            }
+        };
 
         _enemiesManager.LevelCompletionEvent += () => {
             CanSwitchLevel = true;
@@ -78,18 +93,18 @@ public class Level {
                 _trader.TraderAction = new MovingDown();
             }
         };
-
+        _controlsHintTimer.Start();
     }
 
     /// <summary>
     /// Method only for testing purposes
     /// </summary>
     public void PlaceItems() {
-        for (int i = 1; i < Width - 1; i++) {
-            GameObject item = new SmokeBomb(i * Consts.ObjectSize, 4 * Consts.ObjectSize, _enemiesManager, this);
-            this.AddObject(item, GetIndexes(item));
+        for (int i = 1; i < Width - 1; ++i) {
+            // GameObject item = new SmokeBomb(i * Consts.ObjectSize, 4 * Consts.ObjectSize, _enemiesManager, this);
+            GameObject item = new Nuke(i * Consts.ObjectSize, 4 * Consts.ObjectSize, _enemiesManager);
+            AddObject(item, GetIndexes(item));
             // Console.WriteLine(GetIndexes(item));
-
         }
         GameObject powerUp = new TombStone(7 * Consts.ObjectSize, 4 * Consts.ObjectSize);
         AddObject(powerUp, GetIndexes(powerUp));
@@ -102,18 +117,26 @@ public class Level {
         //this.AddObject(coffee2, GetIndexes(coffee2));
     }
 
-    public void LoadContent(ContentManager cm, GraphicsDevice gd) {
+    public void LoadContent(ContentManager cm) {
         _pixelFont = cm.Load<SpriteFont>("PixelFont");
         _counters.LoadContent(_pixelFont);
         
-        string[] gameOverText = { "New Game", "Exit" };
-        string[] pauseText = { "Return to game", "Exit"};
-        int middle = Width * Consts.ObjectSize / 2;
+        string[] gameOverText = ["New Game", "Exit"];
+        string[] pauseText = ["Return to game", "Exit"];
+        const int middle = Width * Consts.ObjectSize / 2;
         Vector2 size = _pixelFont.MeasureString(gameOverText.GetLongestString()); //in pixels
         Vector2 pos = new(middle - (int)(size.X / 2), middle - (int)(size.Y / 2) - 5 - (int)size.Y);
         
         _gameOverScreen = new MenuScreen((int)pos.X, (int)pos.Y, new[] { NewGame, Exit }, gameOverText);
-        _pauseScreen = new MenuScreen((int)pos.X, (int)pos.Y, new [] { _ => _paused = false, Exit }, pauseText);
+        _pauseScreen = new MenuScreen(
+            (int)pos.X,
+            (int)pos.Y,
+            new [] {
+                _ => { _paused = false; if (_showGameControls) _controlsHintTimer.Start(); },
+                Exit
+            },
+            pauseText
+        );
         _trader.LoadContent(_pixelFont);
         _gameOverScreen.LoadContent(_pixelFont, 20f);
         _pauseScreen.LoadContent(_pixelFont, 20f);
@@ -124,7 +147,7 @@ public class Level {
         sb.Begin(
             SpriteSortMode.Deferred, 
             BlendState.AlphaBlend, 
-            SamplerState.PointClamp, //nearest neighbour
+            SamplerState.PointClamp, //nearest neighbor
             DepthStencilState.None, 
             RasterizerState.CullCounterClockwise, 
             null, 
@@ -145,6 +168,23 @@ public class Level {
             sb.End();
             return;
         }
+
+        bool showGameControls;
+        lock(_lock)  showGameControls = _showGameControls;
+        
+        if (showGameControls) {
+            Rectangle textureBounds = TextureManager.GuiElementsCoordsP[(int)GuiElement.ControlsHint];
+            Rectangle timerBounds = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerFrame];
+            int x = Width * Consts.ObjectSize / 2 - textureBounds.Width / 2 - Consts.ObjectSize;
+            int y = (int)_levelTimer.Coords.Y + timerBounds.Height + 20;
+            TextureManager.DrawGuiElement(GuiElement.ControlsHint, x, y, sb);
+        }
+
+        if (CanSwitchLevel) {
+            const int x = Width * Consts.ObjectSize + 10;
+            int y = (int)_counters.Coords.Y + 75;
+            TextureManager.DrawGuiElement(GuiElement.EKeyHint, x, y, sb);
+        }
         
         TextureManager.DrawMap("Map" + LevelNum, sb);
         new List<GameObject>(_items).ForEach(item => item.Draw(sb));
@@ -152,7 +192,7 @@ public class Level {
         _enemiesManager.Draw(sb);
         
         _levelTimer.Draw(sb, LevelNum);
-        _pwuDisplay.Draw(sb);
+        _pwuDisplay.Draw(sb, _player);
         _trader.Draw(sb);
         _player.Draw(sb);
         
@@ -175,10 +215,15 @@ public class Level {
         
         if (Keyboard.GetState().IsKeyDown(Keys.E) && CanSwitchLevel)
             SwitchLevel(game);
-
         bool currentPState = Keyboard.GetState().IsKeyDown(Keys.P);
         if (currentPState && !_prevPState) {
+            bool showGameControls;
+            lock (_lock) showGameControls = _showGameControls;
             _paused = !_paused;
+            if (showGameControls) {
+                if (_paused) _controlsHintTimer.Stop();
+                else _controlsHintTimer.Start();
+            }
         }
         _prevPState = currentPState;
         
@@ -192,7 +237,7 @@ public class Level {
         new List<GameObject>(_items).ForEach(o => {
             if (o is IItem item) item.Update(_player, this, gt);
         });
-        _trader.Update(this, _player , gt);
+        _trader.Update(_player , gt);
     }
 
     /// <summary>
@@ -214,7 +259,7 @@ public class Level {
 
         if (map == null) return;
         
-        string[] lines = map.Split(new[] { '\n' }, 2);
+        string[] lines = map.Split(['\n'], 2);
         string[] firstLine = lines[0].Split(' ');
 
         Dictionary<EnemyType, double> enemyTypeList = new();
@@ -233,30 +278,24 @@ public class Level {
 
         lines = lines[1].Split('\n');
 
-        for (int y = 0; y < lines.Length; y++) {
+        for (int y = 0; y < lines.Length; ++y) {
             string line = lines[y];
             string[] columns = line.Split(' ');
 
-            for (int x = 0; x < columns.Length; x++) {
+            for (int x = 0; x < columns.Length; ++x) {
 
                 if (!int.TryParse(columns[x], out int cell)) continue;
 
                 GameObject gameObject = cell switch {
-                    1 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.NotShootAble),
-                    3 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.ShootAble),
+                    1 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.NotShootable),
+                    3 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.Shootable),
                     2 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.Spawner),
                     4 => new Wall(x * Consts.ObjectSize, y * Consts.ObjectSize, WallType.Edge),
                     _ => new EmptyObject()
                 };
 
-                switch (gameObject) {
-                    case Wall { Type: WallType.Spawner } spawner:
-                        _spawners.Add(spawner);
-                        break;
-                    case Wall { Type: WallType.ShootAble } solidWall:
-                        _solidWalls.Add(solidWall);
-                        break;
-                }
+                if (gameObject is Wall { Type: WallType.Spawner } spawner)
+                    _spawners.Add(spawner);
 
                 _field[y, x] = gameObject;
             }
@@ -272,8 +311,8 @@ public class Level {
     public List<GameObject> GetSurroundings(int xIndex, int yIndex) {
         List<GameObject> surroundings = new();
 
-        for (int y = yIndex - 1; y <= yIndex + 1; y++) {
-            for (int x = xIndex - 1; x <= xIndex + 1; x++) {
+        for (int y = yIndex - 1; y <= yIndex + 1; ++y) {
+            for (int x = xIndex - 1; x <= xIndex + 1; ++x) {
                 if (IsIndexOutOfBounds(x, y) || _field[y, x] is EmptyObject or null) continue;
 
                 surroundings.Add(_field[y, x]);
@@ -302,8 +341,8 @@ public class Level {
     /// Clears the level of all items and enemies
     /// </summary>
     public void ClearLevel() {
-        for (int i = 0; i < Width; i++) {
-            for (int j = 0; j < Width; j++) {
+        for (int i = 0; i < Width; ++i) {
+            for (int j = 0; j < Width; ++j) {
                 if (_field[i, j] is IItem) {
                     _field[i, j] = new EmptyObject();
                 }
@@ -314,46 +353,22 @@ public class Level {
         _enemiesManager.KillAll();
     }
 
-    public void RemoveObject(GameObject gameObject, (int x, int y) indexes) 
-        => RemoveObject(gameObject, indexes.x, indexes.y);
+    public void RemoveObject(GameObject gameObject, (int x, int y) indexes) => RemoveObject(gameObject, indexes.x, indexes.y);
 
     public void RemoveObject(GameObject gameObject, int indexX, int indexY) {
         if (IsIndexOutOfBounds(indexX, indexY)) return;
-
+        
         _field[indexY, indexX] = new EmptyObject();
         _items.Remove(gameObject);
     }
     
-    public bool IsOccupiedAt((int x, int y) indexes) {
-        return _field[indexes.y, indexes.x] is not EmptyObject;
-    }
+    /// <summary>
+    /// Returns true if the given indexes are occupied by an object
+    /// </summary>
+    /// <param name="indexes">Tuple of X and Y indexes of the object</param>
+    /// <returns>True if the indexes are occupied, false otherwise</returns>
+    public bool IsOccupiedAt((int x, int y) indexes) => _field[indexes.y, indexes.x] is not EmptyObject;
 
-    public GameObject GetGameObject(int indexX, int indexY) {
-        return _field[indexY, indexX];
-    }
-
-    public ImmutableList<Wall> GetSpawners => _spawners.ToImmutableList();
-    public ImmutableList<Wall> GetSolidWalls => _solidWalls.ToImmutableList();
-
-    public static bool IsIndexOutOfBounds(int xIndex, int yIndex) {
-        return xIndex < 0 || yIndex < 0 || xIndex >= Width || yIndex >= Width;
-    }
-
-    public static bool IsPosOutOfBounds(float x, float y) {
-        return x < 0 || y < 0 || x >= Width * Consts.ObjectSize || y >= Width * Consts.ObjectSize;
-    }
-
-    public static (int x, int y) GetIndexes(float xMiddle, float yMiddle) {
-        return (
-            (int)((xMiddle - Consts.LevelXOffset) / Consts.ObjectSize),
-            (int)((yMiddle - Consts.LevelYOffset) / Consts.ObjectSize)
-        );
-    }
-    
-    public static (int x, int y) GetIndexes(GameObject o) {
-        return GetIndexes(o.XMiddle, o.YMiddle);
-    }
-    
     /// <summary>
     /// Adds seconds to a timer. If the timer is full, it will add the remaining seconds to the next level timer
     /// </summary>
@@ -367,19 +382,49 @@ public class Level {
         }
     }
 
+    /// <summary>
+    /// Checks if the given indexes are out of bounds
+    /// </summary>
+    /// <param name="xIndex">X index</param>
+    /// <param name="yIndex">Y index</param>
+    /// <returns>True if the indexes are out of bounds, false otherwise</returns>
+    public static bool IsIndexOutOfBounds(int xIndex, int yIndex) => xIndex < 0 || yIndex < 0 || xIndex >= Width || yIndex >= Width;
+
+    /// <summary>
+    /// Checks if the given position is out of bounds
+    /// </summary>
+    /// <param name="x">X coordinate</param>
+    /// <param name="y">Y coordinate</param>
+    /// <returns>True if the position is out of bounds, false otherwise</returns>
+    public static bool IsPosOutOfBounds(float x, float y) => x < 0 || y < 0 || x >= Width * Consts.ObjectSize || y >= Width * Consts.ObjectSize;
+
+    /// <summary>
+    /// Returns the indexes of the given position
+    /// </summary>
+    /// <param name="xMiddle">X coordinates of the middle of the object</param>
+    /// <param name="yMiddle">Y coordinates of the middle of the object</param>
+    /// <returns>Tuple that contains X and Y indexes of the object</returns>
+    public static (int x, int y) GetIndexes(float xMiddle, float yMiddle) =>
+        (
+            (int)((xMiddle - Consts.LevelXOffset) / Consts.ObjectSize),
+            (int)((yMiddle - Consts.LevelYOffset) / Consts.ObjectSize)
+        );
+
+    /// <summary>
+    /// Returns the indexes of the given object
+    /// </summary>
+    /// <param name="o">Object we want to get the indexes of</param>
+    /// <returns>Tuple that contains X and Y indexes of the object</returns>
+    public static (int x, int y) GetIndexes(GameObject o) => GetIndexes(o.XMiddle, o.YMiddle);
+
+
     private void SwitchLevel(Game game) {
         CanSwitchLevel = false;
         _enemiesManager.CanSpawn = true;
         _enemiesManager.Timer = 0f;
         _levelTimer.Reset();
-        ++LevelNum;
         _trader.Hide();
-        if (LevelNum is 4 or 8 or 12) {
-            ++LevelNum;
-        }
-        if (LevelNum >= TextureManager.MapCount) {
-            LevelNum = 0;
-        }
+        LevelNum = (LevelNum + (LevelNum + 1 is 4 or 8 or 12 ? 2 : 1)) % TextureManager.MapCount;
         _player.ResetPosition(LevelNum);
 
         Generate(game);

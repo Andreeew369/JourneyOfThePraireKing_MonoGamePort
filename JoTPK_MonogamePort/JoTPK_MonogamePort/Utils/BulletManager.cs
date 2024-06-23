@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-
-using JoTPK_MonogamePort.Entities;
-using JoTPK_MonogamePort.Entities.Enemies;
 using JoTPK_MonogamePort.GameObjects;
-using JoTPK_MonogamePort.Items;
+using JoTPK_MonogamePort.GameObjects.Entities;
+using JoTPK_MonogamePort.GameObjects.Entities.Enemies;
+using JoTPK_MonogamePort.GameObjects.Items;
 using JoTPK_MonogamePort.World;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -22,15 +21,23 @@ public class BulletManager {
     public int BulletCount => _bullets.Count;
 
     private const int BulletPoolSize = 200;
+    /// <summary>
+    /// Active bullets that are currently in the game
+    /// </summary>
     private readonly List<Bullet> _bullets;
     private readonly Queue<Bullet> _bulletPool;
-    private GameElements _bulletType;
+    private readonly GameElements _bulletType;
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="level">Instance of the current level</param>
+    /// <param name="type">Type of the bullets the bullet manager manages</param>
     public BulletManager(Level level, GameElements type) {
         _bulletType = type;
         _bullets = new List<Bullet>();
         _bulletPool = new Queue<Bullet>();
-        for (int i = 0; i < BulletPoolSize; i++) {
+        for (int i = 0; i < BulletPoolSize; ++i) {
             _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level, type));
         }
     }
@@ -104,7 +111,7 @@ public class BulletManager {
                     _bullets.Add(GetBulletFromPool(player.X, player.Y, dx, dy, player.BulletDamage, level));
                     break;
                 } 
-                default: throw new NotImplementedException();
+                default: throw new NotImplementedException($"Shooting type {player.ShootingType.ToString()} is not implemented");
             }
         }
         else if (sender is CowBoy) {
@@ -113,25 +120,17 @@ public class BulletManager {
         }
     }
     
+    public void Clear() {
+        _bullets.ForEach(b => _bulletPool.Enqueue(b));
+        _bullets.Clear();
+    }
+    
     /// <summary>
     /// Returns bullets to the pool of bullets
     /// </summary>
     /// <param name="bullet">Bullet to be recycled</param>
     private void RecycleBullet(Bullet bullet) => _bulletPool.Enqueue(bullet);
-    
-    public void Clear() {
-        _bullets.ForEach(b => _bulletPool.Enqueue(b));
-        _bullets.Clear();
-    }
 
-    public void ChangeBullerType(GameElements type, Level level) {
-        _bulletPool.Clear();
-        for (int i = 0; i < BulletPoolSize; i++) {
-            _bulletPool.Enqueue(new Bullet(0, 0, 0, 0, 0, level, type));
-        }
-        _bulletType = type;
-    }
-    
     /// <summary>
     /// Creates 8 bullets that go in all directions. Used in <see cref="WagonWheel"/>
     /// </summary>

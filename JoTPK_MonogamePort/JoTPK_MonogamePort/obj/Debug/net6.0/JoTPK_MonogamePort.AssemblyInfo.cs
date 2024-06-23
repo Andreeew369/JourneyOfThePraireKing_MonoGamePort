@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JoTPK_MonogamePort")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+763a6ccd7f0892a55704e9a79c7d781a467e6433")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d789b385f8be1d608537581733f230ea60790f64")]
 [assembly: System.Reflection.AssemblyProductAttribute("JoTPK_MonogamePort")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JoTPK_MonogamePort")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

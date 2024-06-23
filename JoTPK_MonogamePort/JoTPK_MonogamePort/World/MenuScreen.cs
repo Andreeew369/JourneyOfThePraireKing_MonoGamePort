@@ -29,7 +29,7 @@ public class MenuScreen {
     /// <param name="actions">Array of actions that will be called when the option is selected</param>
     /// <param name="texts">Array of texts that will be displayed as options</param>
     /// <exception cref="ArgumentException">
-    /// If the length of <paramref name="actions"/> is not the same as the length of <paramref name="texts"/>
+    /// If the length of <paramref name="actions"/> has different length than <paramref name="texts"/>
     /// </exception>
     public MenuScreen(int x, int y, Action<Game>[] actions, string[] texts) {
         if (actions.Length != texts.Length)
@@ -53,7 +53,7 @@ public class MenuScreen {
         
         bool currentState = kst.IsKeyDown(Keys.Up);
         if (currentState && !_prevUpState) {
-            _optionNumber--;
+            --_optionNumber;
             if (_optionNumber < 0) {
                 _optionNumber = _options.Length - 1;
             }
@@ -62,7 +62,7 @@ public class MenuScreen {
         currentState = kst.IsKeyDown(Keys.Down);
 
         if (currentState && !_prevDownState) {
-            _optionNumber++;
+            ++_optionNumber;
             if (_optionNumber >= _options.Length) {
                 _optionNumber = 0;
             }
@@ -80,7 +80,7 @@ public class MenuScreen {
     public void Draw(SpriteBatch sb) {
         if (_font == null) throw new NullReferenceException($"{GetType().Name} wasn't loaded");
         
-        for (int i = 0; i < _texts.Length; i++) {
+        for (int i = 0; i < _texts.Length; ++i) {
             Vector2 v = _pos + new Vector2(0, i * (_fontHeight + 5));    
             sb.DrawString(
                 _font, _texts[i], v, Color.White, 0f, 

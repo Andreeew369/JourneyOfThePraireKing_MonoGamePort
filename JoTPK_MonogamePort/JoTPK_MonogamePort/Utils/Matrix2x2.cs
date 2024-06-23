@@ -6,16 +6,12 @@ namespace JoTPK_MonogamePort.Utils;
 /// <summary>
 /// 2 by 2 Matrix class
 /// </summary>
-public class Matrix2X2 {
+public class Matrix2X2(float x1, float x2, float y1, float y2) {
     
-    private float X1 { get; }
-    private float Y1 { get; }
-    private float X2 { get; }
-    private float Y2 { get; }
-    
-    public Matrix2X2(float x1, float x2, float y1, float y2) {
-        X1 = x1; Y1 = y1; X2 = x2; Y2 = y2;
-    }
+    private float X1 { get; } = x1;
+    private float Y1 { get; } = y1;
+    private float X2 { get; } = x2;
+    private float Y2 { get; } = y2;
 
     /// <summary>
     /// Rotates a vector represented with tuple

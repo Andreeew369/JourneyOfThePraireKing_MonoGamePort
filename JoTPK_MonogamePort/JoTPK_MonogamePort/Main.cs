@@ -12,11 +12,10 @@ public class MainClass {
     static void Main() {
         try {
             // AllocConsole();
-            using var game = new JourneyOfThePraireKing();
+            using var game = new JourneyOfThePrairieKing();
             game.Run();
         } catch (Exception e) {
             Console.WriteLine(e.ToString());
-            //Console.WriteLine(e.StackTrace);
         }
 
         // Console.WriteLine("Press any key to exit...");

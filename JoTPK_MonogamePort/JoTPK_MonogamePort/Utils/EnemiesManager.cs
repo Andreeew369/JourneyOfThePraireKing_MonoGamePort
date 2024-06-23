@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using JoTPK_MonogamePort.Entities;
-using JoTPK_MonogamePort.Entities.Enemies;
 using JoTPK_MonogamePort.GameObjects;
+using JoTPK_MonogamePort.GameObjects.Entities;
+using JoTPK_MonogamePort.GameObjects.Entities.Enemies;
 using JoTPK_MonogamePort.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,7 +13,7 @@ namespace JoTPK_MonogamePort.Utils;
 
 /// <summary>
 /// Class represents a manager for enemies which manages movement, updating, collision detection and spawning of
-/// enemies in current game
+/// enemies in the current game
 /// </summary>
 public class EnemiesManager {
 
@@ -21,16 +21,21 @@ public class EnemiesManager {
     /// Event that is called when the level is completed
     /// </summary>
     public event GameEventHandler? LevelCompletionEvent;
-    
-    protected virtual void OnLevelCompletion() => LevelCompletionEvent?.Invoke();
+
+    private void OnLevelCompletion() => LevelCompletionEvent?.Invoke();
 
     private const float SpawnInterval = 2000; //2 seconds
-    private const int MaxamountOfEnemies = 25;
+    private const int MaxAmountOfEnemies = 25;
+    /// <summary>
+    /// Probabilities of wave sizes. All probabilities have to add up to 1.
+    /// </summary>
+    private static readonly float[] WaveSizeProbability = [0.18f, 0.25f, 0.3f, 0.1f, 0.07f, 0.05f, 0.03f, 0.015f, 0.005f];
     private static readonly Random Rand = new();
     private Dictionary<EnemyType, double> _enemyTypeList = new();
-    private readonly List<Enemy> _enemies = new();
+    private readonly List<Enemy> _enemies = [];
     private float _timer;
     
+    public bool Nuked { get; set; }
     public float Timer {
         set => _timer = value;
     }
@@ -43,7 +48,7 @@ public class EnemiesManager {
     /// <summary>
     /// Defines if enemies can move
     /// </summary>
-    public bool CanMove { private get; set; } = true;
+    public bool CanMove { get; set; } = true;
 
     /// <summary>
     /// Sets the list of probabilities for enemies that can spawn
@@ -76,47 +81,12 @@ public class EnemiesManager {
             }
         });
         
-        if (_enemies.Count == 0 && !CanSpawn && !player.IsDead && level.CanSwitchLevel) {
+        if (_enemies.Count == 0 && !CanSpawn && !player.IsDead && !Nuked) {
             // level.CanSwitchLevel = true;
             OnLevelCompletion();
         } 
     }
 
-    /// <summary>
-    /// Creates enemies on the map
-    /// </summary>
-    /// <param name="level">Instancia triedy Level</param>
-    /// <param name="gt">GameTime v hre</param>
-    private void CreateEnemies(Level level, GameTime gt) {
-        if (!CanSpawn)
-            return;
-
-        _timer += gt.ElapsedGameTime.Milliseconds;
-        if (!(_timer >= SpawnInterval)) 
-            return;
-        
-        _timer = 0;
-        if (_enemies.Count >= MaxamountOfEnemies)
-            return;
-
-        // get spawn locations that are not occupied by enemy 
-        List<Wall> spawnLocations = level.GetSpawners.Where(e => !e.IsOccupied(_enemies)).ToList();
-        if (spawnLocations.Count == 0)
-            return;
-
-        int enemyCountInWave = GetWaveSize();
-        if (spawnLocations.Count < enemyCountInWave) {
-            enemyCountInWave = spawnLocations.Count;
-        }
-            
-        for (int i = 0; i < enemyCountInWave; i++) {
-            Wall spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
-            while (spawner.IsOccupied(_enemies)) {
-                spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
-            }
-            _enemies.Add(GetRandomEnemy(_enemyTypeList, spawner.RoundedX, spawner.RoundedY, level));
-        }
-    }
     
     /// <summary>
     /// Damages all enemies that are currently colliding with the bullet
@@ -137,6 +107,7 @@ public class EnemiesManager {
     public void NukeEnemies() {
         KillAll();
         CanSpawn = false;
+        Nuked = true;
         _timer = 0;
     }
 
@@ -146,11 +117,41 @@ public class EnemiesManager {
     public void KillAll() => new List<Enemy>(_enemies).ForEach(e => e.State = EnemyState.Dead);
 
     /// <summary>
-    /// Probabilities of wave sizes. All probabilities have to add up to 1.
+    /// Creates enemies on the map
     /// </summary>
-    private static readonly float[] WaveSizeProbability = {
-        0.18f, 0.25f, 0.3f, 0.1f, 0.07f, 0.05f, 0.03f, 0.015f, 0.005f
-    };
+    /// <param name="level">Instancia triedy Level</param>
+    /// <param name="gt">GameTime v hre</param>
+    private void CreateEnemies(Level level, GameTime gt) {
+        if (!CanSpawn)
+            return;
+
+        _timer += gt.ElapsedGameTime.Milliseconds;
+        if (!(_timer >= SpawnInterval)) 
+            return;
+        
+        _timer = 0;
+        if (_enemies.Count >= MaxAmountOfEnemies)
+            return;
+
+        // get spawn locations that aren't occupied 
+        List<Wall> spawnLocations = level.Spawners.Where(e => !e.IsOccupied(_enemies)).ToList();
+        if (spawnLocations.Count == 0)
+            return;
+
+        int enemyCountInWave = GetWaveSize();
+        if (spawnLocations.Count < enemyCountInWave) {
+            enemyCountInWave = spawnLocations.Count;
+        }
+            
+        for (int i = 0; i < enemyCountInWave; ++i) {
+            Wall spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
+            while (spawner.IsOccupied(_enemies)) {
+                spawner = spawnLocations[(int)Rand.NextInt64(spawnLocations.Count)];
+            }
+            _enemies.Add(GetRandomEnemy(_enemyTypeList, spawner.RoundedX, spawner.RoundedY, level));
+        }
+    }
+    
 
     /// <summary>
     /// Returns the random size of the wave depending on <see cref="WaveSizeProbability"/>

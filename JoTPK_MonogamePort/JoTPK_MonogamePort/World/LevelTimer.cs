@@ -1,39 +1,33 @@
 using System;
-using JoTPK_MonogamePort.Entities;
+using JoTPK_MonogamePort.GameObjects.Entities;
 using JoTPK_MonogamePort.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace JoTPK_MonogamePort.World; 
 
-public class LevelTimer {
+public class LevelTimer(int x, int y) {
     private const float Milliseconds = 20_000f;
     
     public static readonly int DefaultLength = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient].Width;
     //90 sekund => 472px -> dlzka casovaca
     //x sekund => 1px
     //x = 90 / 472
-    private static readonly float UpdateInterval = Milliseconds / DefaultLength; //how much miliseconds is one pixel
-    private Rectangle _timerBounds;
+    private static readonly float UpdateInterval = Milliseconds / DefaultLength; //represents how much milliseconds are one pixel
+    private Rectangle _timerBounds = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient];
     private float _timer;
 
-    private readonly Vector2 _coords;
+    public readonly Vector2 Coords = new(x, y);
     private bool _canMove = true;
     public int Width => _timerBounds.Width;
 
-    public LevelTimer(int x, int y) {
-        _timerBounds = TextureManager.GuiElementsCoordsP[(int)GuiElement.TimerGradient];
-        _coords = new Vector2(x, y);
-        _timer = 0f;
-    }
-    
     public void Draw(SpriteBatch sb, int levelNumber) {
         if (levelNumber is 4 or 8 or 12)
             return;
         
-        TextureManager.DrawGuiElement(GuiElement.TimerFrame, _coords.X, _coords.Y, sb);
+        TextureManager.DrawGuiElement(GuiElement.TimerFrame, Coords.X, Coords.Y, sb);
         if (_timerBounds.Width > 0) {
-            TextureManager.DrawGuiElement(_coords.X + 8, _coords.Y + 8, sb, _timerBounds);
+            TextureManager.DrawGuiElement(Coords.X + 8, Coords.Y + 8, sb, _timerBounds);
         }
     }
     
@@ -43,12 +37,13 @@ public class LevelTimer {
         
         _timer += gt.ElapsedGameTime.Milliseconds;
         if (_timer >= UpdateInterval && _timerBounds.Width > 0 && _canMove) {
-            _timerBounds.Width--;
+            --_timerBounds.Width;
             _timer = 0;
         }
 
         if (_timerBounds.Width <= 0) {
             enemiesManager.CanSpawn = false;
+            enemiesManager.Nuked = false;
         }
     }
 
@@ -78,10 +73,10 @@ public class LevelTimer {
     }
 
     /// <summary>
-    /// Converts seconds to how many pixel it is on the Level Timer
+    /// Converts seconds to how many pixels the seconds are on the Level Timer
     /// </summary>
     /// <param name="seconds">Amount of seconds</param>
-    /// <returns>Amount of pixels</returns>
+    /// <returns>Number of pixels</returns>
     public static int SecondsToPixels(int seconds) {
         return (int)Math.Round(seconds / UpdateInterval);
     }
